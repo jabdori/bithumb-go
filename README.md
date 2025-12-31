@@ -1,6 +1,6 @@
 # Bithumb Go SDK
 
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 빗썸(Bithumb) 거래소 API를 위한 공식 Go SDK입니다. REST API와 WebSocket을 지원하며, 타입 안전성과 동시성 안전성을 보장합니다.
@@ -111,7 +111,7 @@ func main() {
     }
 
     for _, acc := range accounts {
-        fmt.Printf("%s: 보유 %.8f (잠김 %.8f)\n",
+        fmt.Printf("%s: 보유 %s (잠김 %s)\n",
             acc.Currency, acc.Balance, acc.Locked)
     }
 
@@ -356,7 +356,7 @@ ws.SetReconnectTimeout(15 * time.Second)
 
 ## 요구사항
 
-- Go 1.21 이상
+- Go 1.23 이상
 
 ## 라이선스
 
