@@ -201,3 +201,185 @@ func (c *Client) CancelOrderWithContext(ctx context.Context, req *private.Cancel
 
 	return nil
 }
+
+// GetOrderDetail retrieves a single order by UUID.
+func (c *Client) GetOrderDetail(req *private.GetOrderDetailRequest) (*private.Order, error) {
+	return c.GetOrderDetailWithContext(context.Background(), req)
+}
+
+// GetOrderDetailWithContext retrieves a single order by UUID with context.
+func (c *Client) GetOrderDetailWithContext(ctx context.Context, req *private.GetOrderDetailRequest) (*private.Order, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeAPI,
+			Message: fmt.Sprintf("invalid request: %v", err),
+			Err:     err,
+		}
+	}
+
+	url := fmt.Sprintf("%s/v1/order?uuid=%s", c.base.BaseURL(), req.UUID)
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "read response failed",
+			Err:     err,
+		}
+	}
+
+	var order private.Order
+	if err := json.Unmarshal(body, &order); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "parse response failed",
+			Err:     err,
+		}
+	}
+
+	return &order, nil
+}
+
+// GetOrders retrieves a list of orders.
+func (c *Client) GetOrders(req *private.GetOrdersRequest) ([]private.Order, error) {
+	return c.GetOrdersWithContext(context.Background(), req)
+}
+
+// GetOrdersWithContext retrieves a list of orders with context.
+func (c *Client) GetOrdersWithContext(ctx context.Context, req *private.GetOrdersRequest) ([]private.Order, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeAPI,
+			Message: fmt.Sprintf("invalid request: %v", err),
+			Err:     err,
+		}
+	}
+
+	url := c.base.BaseURL() + "/v1/orders"
+
+	// Build query parameters
+	query := ""
+	if req.Market != "" {
+		query = "market=" + req.Market
+	}
+	if len(req.UUIDs) > 0 {
+		for _, uuid := range req.UUIDs {
+			if query != "" {
+				query += "&"
+			}
+			query += "uuids[]=" + uuid
+		}
+	}
+	if req.State != "" {
+		if query != "" {
+			query += "&"
+		}
+		query += "state=" + req.State
+	}
+	if len(req.States) > 0 {
+		for _, state := range req.States {
+			if query != "" {
+				query += "&"
+			}
+			query += "states[]=" + state
+		}
+	}
+	if req.Page > 0 {
+		if query != "" {
+			query += "&"
+		}
+		query += fmt.Sprintf("page=%d", req.Page)
+	}
+	if req.Limit > 0 {
+		if query != "" {
+			query += "&"
+		}
+		query += fmt.Sprintf("limit=%d", req.Limit)
+	}
+	if req.OrderBy != "" {
+		if query != "" {
+			query += "&"
+		}
+		query += "order_by=" + req.OrderBy
+	}
+
+	if query != "" {
+		url += "?" + query
+	}
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "read response failed",
+			Err:     err,
+		}
+	}
+
+	var orders []private.Order
+	if err := json.Unmarshal(body, &orders); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "parse response failed",
+			Err:     err,
+		}
+	}
+
+	return orders, nil
+}
+
+// GetOrderChance retrieves order chance information.
+func (c *Client) GetOrderChance(req *private.GetOrderChanceRequest) (*private.OrderChance, error) {
+	return c.GetOrderChanceWithContext(context.Background(), req)
+}
+
+// GetOrderChanceWithContext retrieves order chance information with context.
+func (c *Client) GetOrderChanceWithContext(ctx context.Context, req *private.GetOrderChanceRequest) (*private.OrderChance, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeAPI,
+			Message: fmt.Sprintf("invalid request: %v", err),
+			Err:     err,
+		}
+	}
+
+	url := fmt.Sprintf("%s/v1/orders/chance?market=%s", c.base.BaseURL(), req.Market)
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "read response failed",
+			Err:     err,
+		}
+	}
+
+	var chance private.OrderChance
+	if err := json.Unmarshal(body, &chance); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "parse response failed",
+			Err:     err,
+		}
+	}
+
+	return &chance, nil
+}
