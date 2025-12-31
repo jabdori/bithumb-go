@@ -2,6 +2,8 @@ package public_test
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -9,6 +11,43 @@ import (
 	publicmodels "github.com/hysuki/bithumb-go/models/public"
 	"github.com/hysuki/bithumb-go/public"
 )
+
+// Test helpers
+func assertEqual[T comparable](t *testing.T, expected, actual T, msgAndArgs ...interface{}) {
+	t.Helper()
+	if expected != actual {
+		t.Errorf("Expected %v, got %v. %s", expected, actual, msgAndArgs)
+	}
+}
+
+func assertNil(t *testing.T, actual interface{}, msgAndArgs ...interface{}) {
+	t.Helper()
+	if actual != nil {
+		t.Errorf("Expected nil, got %v. %s", actual, msgAndArgs)
+	}
+}
+
+func TestGetMarketAll(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertEqual(t, "/v1/market/all", r.URL.Path)
+		assertEqual(t, "true", r.URL.Query().Get("isDetails"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[{"market":"KRW-BTC","korean_name":"비트코인","english_name":"Bitcoin","market_warning":"NONE"}]`))
+	}))
+	defer server.Close()
+
+	baseClient, _ := client.NewClient(client.WithBaseURL(server.URL), client.WithHTTPClient(server.Client()))
+	c := public.NewClient(baseClient)
+
+	markets, err := c.GetMarketAll(true)
+	assertNil(t, err)
+	assertEqual(t, 1, len(markets))
+	assertEqual(t, "KRW-BTC", markets[0].Market)
+	assertEqual(t, "비트코인", markets[0].KoreanName)
+	assertEqual(t, "Bitcoin", markets[0].EnglishName)
+	assertEqual(t, "NONE", markets[0].MarketWarning)
+}
 
 func TestGetTicker(t *testing.T) {
 	baseClient, _ := client.NewClient()

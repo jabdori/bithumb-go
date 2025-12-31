@@ -184,3 +184,39 @@ func (c *Client) GetCandlestickWithContext(ctx context.Context, req *public.GetC
 
 	return candles, nil
 }
+
+// GetMarketAll retrieves all available market codes.
+func (c *Client) GetMarketAll(details bool) ([]public.Market, error) {
+	return c.GetMarketAllWithContext(context.Background(), details)
+}
+
+// GetMarketAllWithContext retrieves all available market codes with context.
+func (c *Client) GetMarketAllWithContext(ctx context.Context, details bool) ([]public.Market, error) {
+	params := map[string]string{}
+	if details {
+		params["isDetails"] = "true"
+	}
+
+	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/market/all", params), nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error: status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response: %w", err)
+	}
+
+	var markets []public.Market
+	if err := json.Unmarshal(body, &markets); err != nil {
+		return nil, fmt.Errorf("parse response: %w", err)
+	}
+
+	return markets, nil
+}
