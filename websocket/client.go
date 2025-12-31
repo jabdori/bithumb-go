@@ -137,7 +137,6 @@ func (c *Client) readLoop() {
 		// Read message from WebSocket
 		messageType, message, err := conn.Read(ctx)
 		if err != nil {
-			log.Printf("[WebSocket] Read error: %v", err)
 			c.mu.Lock()
 			c.isConnected = false
 			c.mu.Unlock()
@@ -146,15 +145,10 @@ func (c *Client) readLoop() {
 
 		// Process text messages (Bithumb sends JSON as binary type 2)
 		if messageType == websocket.MessageText || messageType == websocket.MessageBinary {
-			// Log received messages for debugging
-			log.Printf("[WebSocket] Received: %s", string(message))
-
 			if err := c.handleMessage(message); err != nil {
 				// Log handler error but continue processing other messages
 				log.Printf("[WebSocket] handler error: %v", err)
 			}
-		} else {
-			log.Printf("[WebSocket] Received unhandled message type: %d", messageType)
 		}
 	}
 }
@@ -220,9 +214,6 @@ func (c *Client) Subscribe(params []*SubscriptionParam, handlers MessageHandlers
 	if c.conn == nil {
 		return fmt.Errorf("not connected")
 	}
-
-	// Log the subscription message for debugging
-	log.Printf("[WebSocket] Sending subscription: %s", string(body))
 
 	err = c.conn.Write(context.Background(), websocket.MessageText, body)
 	if err != nil {
