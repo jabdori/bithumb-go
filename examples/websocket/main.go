@@ -103,12 +103,12 @@ func main() {
 	fmt.Println("\n구독 시작: KRW-BTC Ticker & OrderBook")
 	params := []*websocket.SubscriptionParam{
 		{
-			Type: websocket.SubscriptionTypeTicker,
-			Codes: []string{"KRW-BTC"},
+			Type:    websocket.SubscriptionTypeTicker,
+			Symbols: []string{"KRW-BTC"},
 		},
 		{
-			Type: websocket.SubscriptionTypeOrderBook,
-			Codes: []string{"KRW-BTC"},
+			Type:    websocket.SubscriptionTypeOrderBook,
+			Symbols: []string{"KRW-BTC"},
 		},
 	}
 

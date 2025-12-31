@@ -145,6 +145,9 @@ func (c *Client) readLoop() {
 
 		// Process text messages only
 		if messageType == websocket.MessageText {
+			// Log received messages for debugging
+			log.Printf("[WebSocket] Received: %s", string(message))
+
 			if err := c.handleMessage(message); err != nil {
 				// Log handler error but continue processing other messages
 				log.Printf("[WebSocket] handler error: %v", err)
@@ -214,6 +217,9 @@ func (c *Client) Subscribe(params []*SubscriptionParam, handlers MessageHandlers
 	if c.conn == nil {
 		return fmt.Errorf("not connected")
 	}
+
+	// Log the subscription message for debugging
+	log.Printf("[WebSocket] Sending subscription: %s", string(body))
 
 	err = c.conn.Write(context.Background(), websocket.MessageText, body)
 	if err != nil {
