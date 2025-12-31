@@ -62,14 +62,29 @@ func (sm *SubscriptionManager) CreateSubscriptionMessage(params []*SubscriptionP
 	for _, p := range params {
 		messages = append(messages, p)
 
-		// Store subscription info
-		key := string(p.Type)
-		sm.subscriptions[key] = &SubscriptionInfo{
-			Type:      p.Type,
-			Codes:     p.Codes,
-			Ticket:    ticket,
-			CreatedAt: time.Now(),
-			IsActive:  true,
+		// Store subscription info with composite key for uniqueness
+		if len(p.Codes) == 0 {
+			// No codes specified, use type as key
+			key := string(p.Type)
+			sm.subscriptions[key] = &SubscriptionInfo{
+				Type:      p.Type,
+				Codes:     p.Codes,
+				Ticket:    ticket,
+				CreatedAt: time.Now(),
+				IsActive:  true,
+			}
+		} else {
+			// Use type:code composite keys for each code
+			for _, code := range p.Codes {
+				key := string(p.Type) + ":" + code
+				sm.subscriptions[key] = &SubscriptionInfo{
+					Type:      p.Type,
+					Codes:     []string{code},
+					Ticket:    ticket,
+					CreatedAt: time.Now(),
+					IsActive:  true,
+				}
+			}
 		}
 	}
 
@@ -119,14 +134,16 @@ func (sm *SubscriptionManager) RestoreSubscriptions() ([]byte, string, error) {
 	return body, ticket, err
 }
 
-// GetSubscriptions returns all subscriptions.
+// GetSubscriptions returns a copy of all subscriptions.
 func (sm *SubscriptionManager) GetSubscriptions() []*SubscriptionInfo {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
 	result := make([]*SubscriptionInfo, 0, len(sm.subscriptions))
 	for _, sub := range sm.subscriptions {
-		result = append(result, sub)
+		// Return a copy to prevent modification of internal state
+		copy := *sub
+		result = append(result, &copy)
 	}
 	return result
 }
