@@ -13,8 +13,8 @@ import (
 type SubscriptionParam struct {
 	// Type is the subscription type.
 	Type SubscriptionType `json:"type"`
-	// Symbols are the market codes to subscribe to.
-	Symbols []string `json:"symbols,omitempty"`
+	// Codes are the market codes to subscribe to.
+	Codes []string `json:"codes,omitempty"`
 }
 
 // SubscriptionInfo represents subscription information.
@@ -63,19 +63,19 @@ func (sm *SubscriptionManager) CreateSubscriptionMessage(params []*SubscriptionP
 		messages = append(messages, p)
 
 		// Store subscription info with composite key for uniqueness
-		if len(p.Symbols) == 0 {
-			// No symbols specified, use type as key
+		if len(p.Codes) == 0 {
+			// No codes specified, use type as key
 			key := string(p.Type)
 			sm.subscriptions[key] = &SubscriptionInfo{
 				Type:      p.Type,
-				Codes:     p.Symbols,
+				Codes:     p.Codes,
 				Ticket:    ticket,
 				CreatedAt: time.Now(),
 				IsActive:  true,
 			}
 		} else {
 			// Use type:code composite keys for each code
-			for _, code := range p.Symbols {
+			for _, code := range p.Codes {
 				key := string(p.Type) + ":" + code
 				sm.subscriptions[key] = &SubscriptionInfo{
 					Type:      p.Type,
@@ -123,8 +123,8 @@ func (sm *SubscriptionManager) RestoreSubscriptions() ([]byte, string, error) {
 	for _, sub := range sm.subscriptions {
 		if sub.IsActive {
 			param := &SubscriptionParam{
-				Type:    sub.Type,
-				Symbols: sub.Codes,
+				Type:  sub.Type,
+				Codes: sub.Codes,
 			}
 			messages = append(messages, param)
 		}
