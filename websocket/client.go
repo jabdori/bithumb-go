@@ -137,14 +137,15 @@ func (c *Client) readLoop() {
 		// Read message from WebSocket
 		messageType, message, err := conn.Read(ctx)
 		if err != nil {
+			log.Printf("[WebSocket] Read error: %v", err)
 			c.mu.Lock()
 			c.isConnected = false
 			c.mu.Unlock()
 			return
 		}
 
-		// Process text messages only
-		if messageType == websocket.MessageText {
+		// Process text messages (Bithumb sends JSON as binary type 2)
+		if messageType == websocket.MessageText || messageType == websocket.MessageBinary {
 			// Log received messages for debugging
 			log.Printf("[WebSocket] Received: %s", string(message))
 
@@ -152,6 +153,8 @@ func (c *Client) readLoop() {
 				// Log handler error but continue processing other messages
 				log.Printf("[WebSocket] handler error: %v", err)
 			}
+		} else {
+			log.Printf("[WebSocket] Received unhandled message type: %d", messageType)
 		}
 	}
 }
