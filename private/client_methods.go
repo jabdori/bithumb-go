@@ -48,7 +48,15 @@ func (c *Client) doWithAuth(ctx context.Context, method, url string, body io.Rea
 
 	if resp.StatusCode >= 400 {
 		defer resp.Body.Close()
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, &bithumbgo.Error{
+				Type:       bithumbgo.ErrorTypeHTTP,
+				Message:    fmt.Sprintf("API error: status %d (failed to read body)", resp.StatusCode),
+				HTTPStatus: resp.StatusCode,
+				Err:        err,
+			}
+		}
 		return nil, &bithumbgo.Error{
 			Type:       bithumbgo.ErrorTypeHTTP,
 			Message:    fmt.Sprintf("API error: status %d: %s", resp.StatusCode, string(body)),
@@ -118,7 +126,15 @@ func (c *Client) PlaceOrderWithContext(ctx context.Context, req *private.PlaceOr
 		}
 	}
 
-	body, _ := json.Marshal(req)
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "marshal request failed",
+			Err:     err,
+		}
+	}
+
 	url := c.base.BaseURL() + "/v2/orders"
 
 	resp, err := c.doWithAuth(ctx, http.MethodPost, url, bytes.NewReader(body))
@@ -165,12 +181,23 @@ func (c *Client) CancelOrderWithContext(ctx context.Context, req *private.Cancel
 
 	url := fmt.Sprintf("%s/v2/order/%s", c.base.BaseURL(), req.UUID)
 
-	reqBody, _ := json.Marshal(map[string]string{})
+	reqBody, err := json.Marshal(map[string]string{})
+	if err != nil {
+		return &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "marshal request failed",
+			Err:     err,
+		}
+	}
+
 	resp, err := c.doWithAuth(ctx, http.MethodDelete, url, bytes.NewReader(reqBody))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
+	// Drain the response body to allow connection reuse
+	io.Copy(io.Discard, resp.Body)
 
 	return nil
 }

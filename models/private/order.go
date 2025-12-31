@@ -46,6 +46,19 @@ type Trade struct {
 	Side string `json:"side"`
 }
 
+// Order side constants.
+const (
+	OrderSideBid = "bid"
+	OrderSideAsk = "ask"
+)
+
+// Order type constants.
+const (
+	OrderTypeLimit  = "limit"
+	OrderTypePrice  = "price"
+	OrderTypeMarket = "market"
+)
+
 // PlaceOrderRequest is a request to place an order.
 type PlaceOrderRequest struct {
 	// Market is the market identifier (e.g., "KRW-BTC").
@@ -65,9 +78,31 @@ func (r *PlaceOrderRequest) Validate() error {
 	if r.Market == "" {
 		return fmt.Errorf("market is required")
 	}
-	if r.Side != "bid" && r.Side != "ask" {
-		return fmt.Errorf("side must be 'bid' or 'ask'")
+
+	if r.Side != OrderSideBid && r.Side != OrderSideAsk {
+		return fmt.Errorf("side must be '%s' or '%s'", OrderSideBid, OrderSideAsk)
 	}
+
+	// Validate order type
+	if r.OrderType != OrderTypeLimit && r.OrderType != OrderTypePrice && r.OrderType != OrderTypeMarket {
+		return fmt.Errorf("order_type must be '%s', '%s', or '%s'", OrderTypeLimit, OrderTypePrice, OrderTypeMarket)
+	}
+
+	// Validate price/volume based on order type
+	switch r.OrderType {
+	case OrderTypeLimit, OrderTypePrice:
+		if r.Price == "" {
+			return fmt.Errorf("price is required for %s orders", r.OrderType)
+		}
+		if r.Volume == "" {
+			return fmt.Errorf("volume is required for %s orders", r.OrderType)
+		}
+	case OrderTypeMarket:
+		if r.Volume == "" {
+			return fmt.Errorf("volume is required for market orders")
+		}
+	}
+
 	return nil
 }
 
