@@ -4,6 +4,7 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
 // handleMessage processes a WebSocket message and dispatches to the appropriate handler.
@@ -12,6 +13,12 @@ func (c *Client) handleMessage(data []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return fmt.Errorf("parse message: %w", err)
+	}
+
+	// Check for error response
+	if _, hasError := raw["error"]; hasError {
+		log.Printf("[WebSocket] Error response: %s", string(data))
+		return nil // Error responses are logged but don't stop processing
 	}
 
 	msgType, ok := raw["type"].(string)
