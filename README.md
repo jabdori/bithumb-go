@@ -19,7 +19,7 @@
 ## 설치
 
 ```bash
-go get github.com/bithumb-go/bithumb-go
+go get github.com/hysuki/bithumb-go
 ```
 
 ## 시작하기
@@ -37,8 +37,8 @@ import (
     "log"
     "time"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/models/public"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/models/public"
 )
 
 func main() {
@@ -90,8 +90,8 @@ import (
     "fmt"
     "log"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/models/private"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/models/private"
 )
 
 func main() {
@@ -156,8 +156,8 @@ import (
     "fmt"
     "log"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/websocket"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/websocket"
 )
 
 func main() {
@@ -220,8 +220,8 @@ import (
     "fmt"
     "log"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/websocket"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/websocket"
 )
 
 func main() {
@@ -366,7 +366,7 @@ ws.SetReconnectTimeout(15 * time.Second)
 
 - 버전 노트: [CHANGELOG.md](CHANGELOG.md)
 - 기여 가이드: [CONTRIBUTING.md](CONTRIBUTING.md)
-- 문제 신고: [GitHub Issues](https://github.com/bithumb-go/bithumb-go/issues)
+- 문제 신고: [GitHub Issues](https://github.com/hysuki/bithumb-go/issues)
 
 ## 공식 링크
 

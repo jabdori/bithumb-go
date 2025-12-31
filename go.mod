@@ -1,4 +1,4 @@
-module github.com/bithumb-go/bithumb-go
+module github.com/hysuki/bithumb-go
 
 go 1.23
 

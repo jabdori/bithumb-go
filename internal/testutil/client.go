@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"time"
 
-	"github.com/bithumb-go/bithumb-go/client"
+	"github.com/hysuki/bithumb-go/client"
 )
 
 // NewTestClient creates a client for testing purposes.

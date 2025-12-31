@@ -4,10 +4,10 @@ package private
 import (
 	"time"
 
-	"github.com/bithumb-go/bithumb-go"
-	"github.com/bithumb-go/bithumb-go/internal/base"
-	"github.com/google/uuid"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	bithumbgo "github.com/hysuki/bithumb-go"
+	"github.com/hysuki/bithumb-go/internal/base"
 )
 
 // Client provides JWT authentication for Private API.

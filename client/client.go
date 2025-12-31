@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bithumb-go/bithumb-go/private"
-	"github.com/bithumb-go/bithumb-go/public"
-	"github.com/bithumb-go/bithumb-go/websocket"
+	"github.com/hysuki/bithumb-go/private"
+	"github.com/hysuki/bithumb-go/public"
+	"github.com/hysuki/bithumb-go/websocket"
 )
 
 const (

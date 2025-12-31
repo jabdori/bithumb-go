@@ -10,7 +10,7 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/bithumb-go/bithumb-go/internal/base"
+	"github.com/hysuki/bithumb-go/internal/base"
 )
 
 const (

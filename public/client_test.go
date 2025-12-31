@@ -1,22 +1,23 @@
-package public
+package public_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/bithumb-go/bithumb-go/client"
-	"github.com/bithumb-go/bithumb-go/models/public"
+	"github.com/hysuki/bithumb-go/client"
+	publicmodels "github.com/hysuki/bithumb-go/models/public"
+	"github.com/hysuki/bithumb-go/public"
 )
 
 func TestGetTicker(t *testing.T) {
 	baseClient, _ := client.NewClient()
-	c := NewClient(baseClient)
+	c := public.NewClient(baseClient)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	ticker, err := c.GetTickerWithContext(ctx, &public.GetTickerRequest{
+	ticker, err := c.GetTickerWithContext(ctx, &publicmodels.GetTickerRequest{
 		Markets: []string{"KRW-BTC"},
 	})
 
@@ -35,12 +36,12 @@ func TestGetTicker(t *testing.T) {
 
 func TestGetOrderBook(t *testing.T) {
 	baseClient, _ := client.NewClient()
-	c := NewClient(baseClient)
+	c := public.NewClient(baseClient)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	orderbook, err := c.GetOrderBookWithContext(ctx, &public.GetOrderBookRequest{
+	orderbook, err := c.GetOrderBookWithContext(ctx, &publicmodels.GetOrderBookRequest{
 		Markets: []string{"KRW-BTC"},
 	})
 
@@ -59,12 +60,12 @@ func TestGetOrderBook(t *testing.T) {
 
 func TestGetRecentTrades(t *testing.T) {
 	baseClient, _ := client.NewClient()
-	c := NewClient(baseClient)
+	c := public.NewClient(baseClient)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	trades, err := c.GetRecentTradesWithContext(ctx, &public.GetRecentTradesRequest{
+	trades, err := c.GetRecentTradesWithContext(ctx, &publicmodels.GetRecentTradesRequest{
 		Market: "KRW-BTC",
 		Count:  10,
 	})
@@ -84,14 +85,14 @@ func TestGetRecentTrades(t *testing.T) {
 
 func TestGetCandlestick(t *testing.T) {
 	baseClient, _ := client.NewClient()
-	c := NewClient(baseClient)
+	c := public.NewClient(baseClient)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	candles, err := c.GetCandlestickWithContext(ctx, &public.GetCandlestickRequest{
+	candles, err := c.GetCandlestickWithContext(ctx, &publicmodels.GetCandlestickRequest{
 		Market: "KRW-BTC",
-		Unit:   public.CandleInterval1m,
+		Unit:   publicmodels.CandleInterval1m,
 		Count:  10,
 	})
 

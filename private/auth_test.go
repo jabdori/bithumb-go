@@ -1,21 +1,22 @@
-// Package private provides JWT authentication for Bithumb Private API.
-package private
+// Package private_test tests JWT authentication for Bithumb Private API.
+package private_test
 
 import (
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/bithumb-go/bithumb-go"
-	"github.com/bithumb-go/bithumb-go/client"
 	"github.com/golang-jwt/jwt/v5"
+	bithumbgo "github.com/hysuki/bithumb-go"
+	"github.com/hysuki/bithumb-go/client"
+	"github.com/hysuki/bithumb-go/private"
 )
 
 func TestGenerateToken(t *testing.T) {
 	base, _ := client.NewClient(
 		client.WithAPIKey("test-key", "test-secret"),
 	)
-	c := NewClient(base)
+	c := private.NewClient(base)
 
 	token, err := c.GenerateToken()
 	if err != nil {
@@ -35,7 +36,7 @@ func TestGenerateToken(t *testing.T) {
 
 func TestGenerateToken_NoAPIKey(t *testing.T) {
 	base, _ := client.NewClient()
-	c := NewClient(base)
+	c := private.NewClient(base)
 
 	_, err := c.GenerateToken()
 	if err == nil {
@@ -52,16 +53,16 @@ func TestGenerateToken_Claims(t *testing.T) {
 	base, _ := client.NewClient(
 		client.WithAPIKey("test-access-key", "test-secret"),
 	)
-	c := NewClient(base)
+	c := private.NewClient(base)
 
 	tokenString, _ := c.GenerateToken()
 
 	// Parse and verify claims
-	token, _ := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, _ := jwt.ParseWithClaims(tokenString, &private.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte("test-secret"), nil
 	})
 
-	if claims, ok := token.Claims.(*TokenClaims); ok {
+	if claims, ok := token.Claims.(*private.TokenClaims); ok {
 		if claims.AccessKey != "test-access-key" {
 			t.Errorf("AccessKey = %v, want test-access-key", claims.AccessKey)
 		}
@@ -80,17 +81,17 @@ func TestGenerateToken_Expiration(t *testing.T) {
 	base, _ := client.NewClient(
 		client.WithAPIKey("test-key", "test-secret"),
 	)
-	c := NewClient(base)
+	c := private.NewClient(base)
 
 	tokenString, _ := c.GenerateToken()
 
 	// Parse and verify expiration
-	token, _ := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, _ := jwt.ParseWithClaims(tokenString, &private.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte("test-secret"), nil
 	})
 
-	if claims, ok := token.Claims.(*TokenClaims); ok {
-		expectedExpiry := time.Now().Add(DefaultTokenExpiration)
+	if claims, ok := token.Claims.(*private.TokenClaims); ok {
+		expectedExpiry := time.Now().Add(private.DefaultTokenExpiration)
 		actualExpiry := claims.ExpiresAt.Time
 
 		// Allow 1 second tolerance
@@ -104,14 +105,14 @@ func TestGenerateToken_NonceUniqueness(t *testing.T) {
 	base, _ := client.NewClient(
 		client.WithAPIKey("test-key", "test-secret"),
 	)
-	c := NewClient(base)
+	c := private.NewClient(base)
 
 	token1, _ := c.GenerateToken()
 	token2, _ := c.GenerateToken()
 
 	// Parse tokens to extract nonces
-	claims1 := &TokenClaims{}
-	claims2 := &TokenClaims{}
+	claims1 := &private.TokenClaims{}
+	claims2 := &private.TokenClaims{}
 
 	jwt.ParseWithClaims(token1, claims1, func(token *jwt.Token) (interface{}, error) {
 		return []byte("test-secret"), nil

@@ -21,7 +21,7 @@
 
 ```bash
 cd /Users/code/workspace/bithumb/bithumb-go
-go mod init github.com/bithumb-go/bithumb-go
+go mod init github.com/hysuki/bithumb-go
 ```
 
 **Step 2: 의존성 추가**
@@ -427,8 +427,8 @@ import (
     "testing"
     "time"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/models/public"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/models/public"
 )
 
 func TestGetTicker(t *testing.T) {
@@ -477,8 +477,8 @@ import (
     "net/http"
     "net/url"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/models/public"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/models/public"
 )
 
 type Client struct {
@@ -670,7 +670,7 @@ import (
     "testing"
     "time"
 
-    "github.com/bithumb-go/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/client"
 )
 
 func TestGenerateToken(t *testing.T) {
@@ -713,7 +713,7 @@ import (
 
     "github.com/golang-jwt/jwt/v5"
 
-    "github.com/bithumb-go/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/client"
 )
 
 type Client struct {
@@ -838,8 +838,8 @@ import (
     "io"
     "net/http"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/models/private"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/models/private"
 )
 
 func (c *Client) doWithAuth(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
@@ -1145,7 +1145,7 @@ import (
 
     "github.com/coder/websocket"
 
-    "github.com/bithumb-go/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/client"
 )
 
 const (
@@ -1431,9 +1431,9 @@ git commit -m "feat: implement WebSocket client with auto-reconnect"
 package client
 
 import (
-    "github.com/bithumb-go/bithumb-go/public"
-    "github.com/bithumb-go/bithumb-go/private"
-    "github.com/bithumb-go/bithumb-go/websocket"
+    "github.com/hysuki/bithumb-go/public"
+    "github.com/hysuki/bithumb-go/private"
+    "github.com/hysuki/bithumb-go/websocket"
 )
 
 type Client struct {
@@ -1486,8 +1486,8 @@ import (
     "log"
     "time"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/models/public"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/models/public"
 )
 
 func main() {
@@ -1547,7 +1547,7 @@ git commit -m "feat: integrate sub-clients into main client"
 ## 설치
 
 ```bash
-go get github.com/bithumb-go/bithumb-go
+go get github.com/hysuki/bithumb-go
 ```
 
 ## 사용법
@@ -1561,8 +1561,8 @@ import (
     "fmt"
     "log"
 
-    "github.com/bithumb-go/bithumb-go/client"
-    "github.com/bithumb-go/bithumb-go/models/public"
+    "github.com/hysuki/bithumb-go/client"
+    "github.com/hysuki/bithumb-go/models/public"
 )
 
 func main() {

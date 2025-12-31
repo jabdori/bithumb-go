@@ -9,8 +9,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/bithumb-go/bithumb-go"
-	"github.com/bithumb-go/bithumb-go/models/private"
+	bithumbgo "github.com/hysuki/bithumb-go"
+	"github.com/hysuki/bithumb-go/models/private"
 )
 
 // doWithAuth performs an authenticated HTTP request.

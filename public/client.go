@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/bithumb-go/bithumb-go/internal/base"
-	"github.com/bithumb-go/bithumb-go/models/public"
+	"github.com/hysuki/bithumb-go/internal/base"
+	"github.com/hysuki/bithumb-go/models/public"
 )
 
 // Client provides access to Bithumb Public API.

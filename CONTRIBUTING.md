@@ -22,7 +22,7 @@ Bithumb Go SDK에 관심을 가져주셔서 감사합니다! 기여를 환영하
 
 ### 버그 신고
 
-버그를 발견하면 [GitHub Issues](https://github.com/bithumb-go/bithumb-go/issues)에 신고해주세요:
+버그를 발견하면 [GitHub Issues](https://github.com/hysuki/bithumb-go/issues)에 신고해주세요:
 
 1. 기존 이슈를 검색하여 중복인지 확인
 2. 제목에 `[Bug]` 접두사 추가
@@ -50,14 +50,14 @@ Bithumb Go SDK에 관심을 가져주셔서 감사합니다! 기여를 환영하
 
 ```bash
 # 리포지토리 포크
-# https://github.com/bithumb-go/bithumb-go/fork
+# https://github.com/hysuki/bithumb-go/fork
 
 # 로컬로 클론
 git clone https://github.com/YOUR_USERNAME/bithumb-go.git
 cd bithumb-go
 
 # 업스트림 원격 저장소 추가
-git remote add upstream https://github.com/bithumb-go/bithumb-go.git
+git remote add upstream https://github.com/hysuki/bithumb-go.git
 ```
 
 ### 의존성 설치
@@ -362,7 +362,7 @@ go test ./...
 
 ## 질문?
 
-질문이 있으시면 [GitHub Issues](https://github.com/bithumb-go/bithumb-go/issues)에 등록해주세요.
+질문이 있으시면 [GitHub Issues](https://github.com/hysuki/bithumb-go/issues)에 등록해주세요.
 
 ---
 

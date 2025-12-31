@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/bithumb-go/bithumb-go/client"
-	"github.com/bithumb-go/bithumb-go/models/public"
+	"github.com/hysuki/bithumb-go/client"
+	"github.com/hysuki/bithumb-go/models/public"
 )
 
 func main() {
