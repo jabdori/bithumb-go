@@ -1,6 +1,6 @@
 module github.com/bithumb-go/bithumb-go
 
-go 1.25.1
+go 1.23
 
 require (
 	github.com/coder/websocket v1.8.14 // indirect
