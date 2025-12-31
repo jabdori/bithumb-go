@@ -3,6 +3,10 @@ package client
 import (
 	"net/http"
 	"time"
+
+	"github.com/bithumb-go/bithumb-go/private"
+	"github.com/bithumb-go/bithumb-go/public"
+	"github.com/bithumb-go/bithumb-go/websocket"
 )
 
 // Client represents the Bithumb API client.
@@ -12,7 +16,17 @@ type Client struct {
 	apiKey     string
 	apiSecret  string
 
+	// HasAPIKeyFunc is a function that checks if API key is configured.
 	HasAPIKeyFunc func() bool
+
+	// Public provides access to Public API endpoints.
+	Public *public.Client
+
+	// Private provides access to Private API endpoints (requires API key).
+	Private *private.Client
+
+	// Websocket provides access to WebSocket connections.
+	Websocket *websocket.Client
 }
 
 // NewClient creates a new Bithumb API client.
@@ -29,6 +43,17 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.HasAPIKeyFunc = func() bool {
 		return c.apiKey != "" && c.apiSecret != ""
 	}
+
+	// Initialize Public API client
+	c.Public = public.NewClient(c)
+
+	// Initialize Private API client (only if API key is configured)
+	if c.HasAPIKey() {
+		c.Private = private.NewClient(c)
+	}
+
+	// Initialize WebSocket client
+	c.Websocket = websocket.NewClient(c)
 
 	return c, nil
 }

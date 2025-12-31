@@ -5,19 +5,18 @@ import (
 	"time"
 
 	"github.com/bithumb-go/bithumb-go"
+	"github.com/bithumb-go/bithumb-go/internal/base"
 	"github.com/google/uuid"
 	"github.com/golang-jwt/jwt/v5"
-
-	"github.com/bithumb-go/bithumb-go/client"
 )
 
 // Client provides JWT authentication for Private API.
 type Client struct {
-	base *client.Client
+	base base.Client
 }
 
 // NewClient creates a new Private API client.
-func NewClient(base *client.Client) *Client {
+func NewClient(base base.Client) *Client {
 	return &Client{base: base}
 }
 

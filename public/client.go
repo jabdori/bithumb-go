@@ -9,17 +9,17 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/bithumb-go/bithumb-go/client"
+	"github.com/bithumb-go/bithumb-go/internal/base"
 	"github.com/bithumb-go/bithumb-go/models/public"
 )
 
 // Client provides access to Bithumb Public API.
 type Client struct {
-	base *client.Client
+	base base.Client
 }
 
 // NewClient creates a new Public API client.
-func NewClient(base *client.Client) *Client {
+func NewClient(base base.Client) *Client {
 	return &Client{base: base}
 }
 

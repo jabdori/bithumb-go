@@ -10,7 +10,7 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/bithumb-go/bithumb-go/client"
+	"github.com/bithumb-go/bithumb-go/internal/base"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 
 // Client represents a WebSocket client.
 type Client struct {
-	base             *client.Client
+	base             base.Client
 	conn             *websocket.Conn
 	url              string
 	subs             *SubscriptionManager
@@ -40,7 +40,7 @@ type Client struct {
 }
 
 // NewClient creates a new WebSocket client.
-func NewClient(base *client.Client) *Client {
+func NewClient(base base.Client) *Client {
 	return &Client{
 		base:             base,
 		url:              DefaultPublicURL,
