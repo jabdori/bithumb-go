@@ -56,6 +56,26 @@ go run main.go
 - 자동 재연결
 - 그레이스풀 셧다운
 
+### 4. Zap Logger (`zap_logger/`)
+
+zap 구조화 로거를 사용하는 WebSocket 예제입니다.
+
+**설치:**
+```bash
+go get go.uber.org/zap
+```
+
+**실행:**
+```bash
+cd examples/zap_logger
+go run main.go
+```
+
+**기능:**
+- zap 로거 통합
+- 구조화된 로그 출력
+- WebSocket 실시간 데이터 구독
+
 ## 주의 사항
 
 1. **Private API 예제**를 실행하려면 빗썸에서 API 키를 발급받아야 합니다.
