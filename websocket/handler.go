@@ -4,7 +4,8 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+
+	"github.com/hysuki/bithumb-go/logger"
 )
 
 // handleMessage processes a WebSocket message and dispatches to the appropriate handler.
@@ -17,7 +18,7 @@ func (c *Client) handleMessage(data []byte) error {
 
 	// Check for error response
 	if _, hasError := raw["error"]; hasError {
-		log.Printf("[WebSocket] Error response: %s", string(data))
+		c.logger.Error("WebSocket error response", logger.F("data", string(data)))
 		return nil // Error responses are logged but don't stop processing
 	}
 

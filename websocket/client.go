@@ -4,13 +4,13 @@ package websocket
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/coder/websocket"
 
 	"github.com/hysuki/bithumb-go/internal/base"
+	"github.com/hysuki/bithumb-go/logger"
 )
 
 const (
@@ -31,6 +31,7 @@ type Client struct {
 	url              string
 	subs             *SubscriptionManager
 	handlers         map[SubscriptionType]MessageHandler
+	logger           logger.Logger
 	done             chan struct{}
 	mu               sync.RWMutex
 	reconnect        bool
@@ -46,6 +47,7 @@ func NewClient(base base.Client) *Client {
 		url:              DefaultPublicURL,
 		subs:             NewSubscriptionManager(),
 		handlers:         make(map[SubscriptionType]MessageHandler),
+		logger:           logger.StdLogger{},
 		done:             make(chan struct{}),
 		reconnect:        true,
 		reconnectDelay:   DefaultReconnectDelay,
@@ -79,6 +81,13 @@ func (c *Client) SetReconnectTimeout(timeout time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.reconnectTimeout = timeout
+}
+
+// SetLogger sets a custom logger for the WebSocket client.
+func (c *Client) SetLogger(l logger.Logger) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.logger = l
 }
 
 // Connect establishes a WebSocket connection.
@@ -147,7 +156,7 @@ func (c *Client) readLoop() {
 		if messageType == websocket.MessageText || messageType == websocket.MessageBinary {
 			if err := c.handleMessage(message); err != nil {
 				// Log handler error but continue processing other messages
-				log.Printf("[WebSocket] handler error: %v", err)
+				c.logger.Error("WebSocket handler error", logger.F("error", err))
 			}
 		}
 	}
@@ -175,7 +184,7 @@ func (c *Client) reconnectLoop() {
 					// Restore subscriptions after reconnection
 					c.RestoreSubscriptions()
 				} else {
-					log.Printf("[WebSocket] reconnect failed: %v", err)
+					c.logger.Error("WebSocket reconnect failed", logger.F("error", err))
 				}
 				cancel()
 			}
