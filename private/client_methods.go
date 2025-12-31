@@ -1,0 +1,176 @@
+// Package private provides a client for Bithumb Private API.
+package private
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+
+	"github.com/bithumb-go/bithumb-go"
+	"github.com/bithumb-go/bithumb-go/models/private"
+)
+
+// doWithAuth performs an authenticated HTTP request.
+func (c *Client) doWithAuth(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+	token, err := c.GenerateToken()
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeAPI,
+			Message: fmt.Sprintf("generate token: %v", err),
+			Err:     err,
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeNetwork,
+			Message: fmt.Sprintf("create request: %v", err),
+			Err:     err,
+		}
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.base.HTTPClient().Do(req)
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeNetwork,
+			Message: "HTTP request failed",
+			Err:     err,
+		}
+	}
+
+	if resp.StatusCode >= 400 {
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		return nil, &bithumbgo.Error{
+			Type:       bithumbgo.ErrorTypeHTTP,
+			Message:    fmt.Sprintf("API error: status %d: %s", resp.StatusCode, string(body)),
+			HTTPStatus: resp.StatusCode,
+		}
+	}
+
+	return resp, nil
+}
+
+// GetAccount retrieves account information.
+func (c *Client) GetAccount(req *private.GetAccountRequest) ([]private.Account, error) {
+	return c.GetAccountWithContext(context.Background(), req)
+}
+
+// GetAccountWithContext retrieves account information with context.
+func (c *Client) GetAccountWithContext(ctx context.Context, req *private.GetAccountRequest) ([]private.Account, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeAPI,
+			Message: fmt.Sprintf("invalid request: %v", err),
+			Err:     err,
+		}
+	}
+
+	url := c.base.BaseURL() + "/v1/accounts"
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "read response failed",
+			Err:     err,
+		}
+	}
+
+	var accounts []private.Account
+	if err := json.Unmarshal(body, &accounts); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "parse response failed",
+			Err:     err,
+		}
+	}
+
+	return accounts, nil
+}
+
+// PlaceOrder places a new order.
+func (c *Client) PlaceOrder(req *private.PlaceOrderRequest) (*private.Order, error) {
+	return c.PlaceOrderWithContext(context.Background(), req)
+}
+
+// PlaceOrderWithContext places a new order with context.
+func (c *Client) PlaceOrderWithContext(ctx context.Context, req *private.PlaceOrderRequest) (*private.Order, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeAPI,
+			Message: fmt.Sprintf("invalid request: %v", err),
+			Err:     err,
+		}
+	}
+
+	body, _ := json.Marshal(req)
+	url := c.base.BaseURL() + "/v2/orders"
+
+	resp, err := c.doWithAuth(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "read response failed",
+			Err:     err,
+		}
+	}
+
+	var order private.Order
+	if err := json.Unmarshal(respBody, &order); err != nil {
+		return nil, &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeParse,
+			Message: "parse response failed",
+			Err:     err,
+		}
+	}
+
+	return &order, nil
+}
+
+// CancelOrder cancels an order.
+func (c *Client) CancelOrder(req *private.CancelOrderRequest) error {
+	return c.CancelOrderWithContext(context.Background(), req)
+}
+
+// CancelOrderWithContext cancels an order with context.
+func (c *Client) CancelOrderWithContext(ctx context.Context, req *private.CancelOrderRequest) error {
+	if err := req.Validate(); err != nil {
+		return &bithumbgo.Error{
+			Type:    bithumbgo.ErrorTypeAPI,
+			Message: fmt.Sprintf("invalid request: %v", err),
+			Err:     err,
+		}
+	}
+
+	url := fmt.Sprintf("%s/v2/order/%s", c.base.BaseURL(), req.UUID)
+
+	reqBody, _ := json.Marshal(map[string]string{})
+	resp, err := c.doWithAuth(ctx, http.MethodDelete, url, bytes.NewReader(reqBody))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
