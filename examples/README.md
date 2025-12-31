@@ -56,14 +56,6 @@ go run main.go
 - 자동 재연결
 - 그레이스풀 셧다운
 
-### 4. Basic Usage (`basic_usage.go`)
-
-기본 사용법을 보여주는 간단한 예제입니다.
-
-```bash
-go run examples/basic_usage.go
-```
-
 ## 주의 사항
 
 1. **Private API 예제**를 실행하려면 빗썸에서 API 키를 발급받아야 합니다.
