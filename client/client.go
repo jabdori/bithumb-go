@@ -9,7 +9,16 @@ import (
 	"github.com/bithumb-go/bithumb-go/websocket"
 )
 
+const (
+	// DefaultBaseURL is the default base URL for the Bithumb API.
+	DefaultBaseURL = "https://api.bithumb.com"
+	// DefaultTimeout is the default HTTP request timeout.
+	DefaultTimeout = 30 * time.Second
+)
+
 // Client represents the Bithumb API client.
+// Client values are safe for concurrent use after initialization.
+// The underlying HTTP client is safe for concurrent use by default.
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
@@ -23,6 +32,7 @@ type Client struct {
 	Public *public.Client
 
 	// Private provides access to Private API endpoints (requires API key).
+	// Will be nil if no API credentials were provided to NewClient.
 	Private *private.Client
 
 	// Websocket provides access to WebSocket connections.
@@ -32,8 +42,8 @@ type Client struct {
 // NewClient creates a new Bithumb API client.
 func NewClient(opts ...Option) (*Client, error) {
 	c := &Client{
-		baseURL:    "https://api.bithumb.com",
-		httpClient: &http.Client{Timeout: 30 * time.Second},
+		baseURL:    DefaultBaseURL,
+		httpClient: &http.Client{Timeout: DefaultTimeout},
 	}
 
 	for _, opt := range opts {

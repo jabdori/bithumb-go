@@ -23,7 +23,8 @@ func main() {
 		Markets: []string{"KRW-BTC"},
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to get ticker: %v", err)
+		return
 	}
 	fmt.Printf("BTC Price: %.2f\n", ticker[0].TradePrice)
 
@@ -35,7 +36,8 @@ func main() {
 		Markets: []string{"KRW-BTC"},
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to get orderbook: %v", err)
+		return
 	}
 	fmt.Printf("OrderBook: %d levels\n", len(orderbook.OrderBookUnits))
 
