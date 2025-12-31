@@ -4,6 +4,7 @@ package websocket
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -19,32 +20,36 @@ const (
 	DefaultPrivateURL = "wss://ws-api.bithumb.com/websocket/v1/private"
 	// DefaultReconnectDelay is the default delay between reconnection attempts.
 	DefaultReconnectDelay = 5 * time.Second
+	// DefaultReconnectTimeout is the default timeout for reconnection attempts.
+	DefaultReconnectTimeout = 10 * time.Second
 )
 
 // Client represents a WebSocket client.
 type Client struct {
-	base            *client.Client
-	conn            *websocket.Conn
-	url             string
-	subs            *SubscriptionManager
-	handlers        map[SubscriptionType]MessageHandler
-	done            chan struct{}
-	mu              sync.RWMutex
-	reconnect       bool
-	reconnectDelay  time.Duration
-	isConnected     bool
+	base             *client.Client
+	conn             *websocket.Conn
+	url              string
+	subs             *SubscriptionManager
+	handlers         map[SubscriptionType]MessageHandler
+	done             chan struct{}
+	mu               sync.RWMutex
+	reconnect        bool
+	reconnectDelay   time.Duration
+	reconnectTimeout time.Duration
+	isConnected      bool
 }
 
 // NewClient creates a new WebSocket client.
 func NewClient(base *client.Client) *Client {
 	return &Client{
-		base:           base,
-		url:            DefaultPublicURL,
-		subs:           NewSubscriptionManager(),
-		handlers:       make(map[SubscriptionType]MessageHandler),
-		done:           make(chan struct{}),
-		reconnect:      true,
-		reconnectDelay: DefaultReconnectDelay,
+		base:             base,
+		url:              DefaultPublicURL,
+		subs:             NewSubscriptionManager(),
+		handlers:         make(map[SubscriptionType]MessageHandler),
+		done:             make(chan struct{}),
+		reconnect:        true,
+		reconnectDelay:   DefaultReconnectDelay,
+		reconnectTimeout: DefaultReconnectTimeout,
 	}
 }
 
@@ -60,6 +65,20 @@ func (c *Client) SetReconnect(enabled bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.reconnect = enabled
+}
+
+// SetReconnectDelay sets the delay between reconnection attempts.
+func (c *Client) SetReconnectDelay(delay time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.reconnectDelay = delay
+}
+
+// SetReconnectTimeout sets the timeout for reconnection attempts.
+func (c *Client) SetReconnectTimeout(timeout time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.reconnectTimeout = timeout
 }
 
 // Connect establishes a WebSocket connection.
@@ -88,8 +107,19 @@ func (c *Client) Connect(ctx context.Context) error {
 
 // readLoop reads messages from the WebSocket connection.
 func (c *Client) readLoop() {
+	// Create context that respects c.done
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		<-c.done
+		cancel()
+	}()
+
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-c.done:
 			return
 		default:
@@ -105,7 +135,7 @@ func (c *Client) readLoop() {
 		}
 
 		// Read message from WebSocket
-		messageType, message, err := conn.Read(context.Background())
+		messageType, message, err := conn.Read(ctx)
 		if err != nil {
 			c.mu.Lock()
 			c.isConnected = false
@@ -115,7 +145,10 @@ func (c *Client) readLoop() {
 
 		// Process text messages only
 		if messageType == websocket.MessageText {
-			c.handleMessage(message)
+			if err := c.handleMessage(message); err != nil {
+				// Log handler error but continue processing other messages
+				log.Printf("[WebSocket] handler error: %v", err)
+			}
 		}
 	}
 }
@@ -133,13 +166,16 @@ func (c *Client) reconnectLoop() {
 			c.mu.RLock()
 			connected := c.isConnected
 			shouldReconnect := c.reconnect
+			timeout := c.reconnectTimeout
 			c.mu.RUnlock()
 
 			if !connected && shouldReconnect {
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), timeout)
 				if err := c.Connect(ctx); err == nil {
 					// Restore subscriptions after reconnection
 					c.RestoreSubscriptions()
+				} else {
+					log.Printf("[WebSocket] reconnect failed: %v", err)
 				}
 				cancel()
 			}
@@ -217,11 +253,11 @@ func (c *Client) RestoreSubscriptions() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if c.conn != nil {
-		return c.conn.Write(context.Background(), websocket.MessageText, body)
+	if c.conn == nil {
+		return fmt.Errorf("not connected")
 	}
 
-	return nil
+	return c.conn.Write(context.Background(), websocket.MessageText, body)
 }
 
 // Close closes the WebSocket connection.
