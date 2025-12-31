@@ -220,3 +220,49 @@ func (c *Client) GetMarketAllWithContext(ctx context.Context, details bool) ([]p
 
 	return markets, nil
 }
+
+// GetDayCandles retrieves day candles.
+func (c *Client) GetDayCandles(req *public.GetDayCandlesRequest) ([]public.DayCandle, error) {
+	return c.GetDayCandlesWithContext(context.Background(), req)
+}
+
+// GetDayCandlesWithContext retrieves day candles with context.
+func (c *Client) GetDayCandlesWithContext(ctx context.Context, req *public.GetDayCandlesRequest) ([]public.DayCandle, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	params := map[string]string{"market": req.Market}
+	if req.To != "" {
+		params["to"] = req.To
+	}
+	if req.Count > 0 {
+		params["count"] = fmt.Sprintf("%d", req.Count)
+	}
+	if req.ConvertingPriceUnit != "" {
+		params["convertingPriceUnit"] = req.ConvertingPriceUnit
+	}
+
+	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/candles/days", params), nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error: status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response: %w", err)
+	}
+
+	var candles []public.DayCandle
+	if err := json.Unmarshal(body, &candles); err != nil {
+		return nil, fmt.Errorf("parse response: %w", err)
+	}
+
+	return candles, nil
+}
