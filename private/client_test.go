@@ -28,7 +28,13 @@ func assertNil(t *testing.T, actual interface{}, msgAndArgs ...interface{}) {
 }
 
 func TestGetAccount(t *testing.T) {
+	// 이 테스트는 유효한 API 키가 필요합니다.
+	// API 키가 없으면 건너뜁니다.
 	baseClient, _ := client.NewClient()
+	if !baseClient.HasAPIKey() {
+		t.Skip("Skipping TestGetAccount: API key not configured")
+	}
+
 	c := private.NewClient(baseClient)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
