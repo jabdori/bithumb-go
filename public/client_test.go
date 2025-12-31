@@ -73,6 +73,52 @@ func TestGetDayCandles(t *testing.T) {
 	assertEqual(t, 50500000.0, candles[0].TradePrice)
 }
 
+func TestGetWeekCandles(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertEqual(t, "/v1/candles/weeks", r.URL.Path)
+		assertEqual(t, "KRW-BTC", r.URL.Query().Get("market"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[{"market":"KRW-BTC","candle_date_time_kst":"2024-01-01T00:00:00","opening_price":50000000,"high_price":51000000,"low_price":49000000,"trade_price":50500000,"timestamp":1704067200000,"candle_acc_trade_price":1000000000,"candle_acc_trade_volume":20.0,"prev_closing_price":50000000,"change_price":500000,"change_rate":0.01}]`))
+	}))
+	defer server.Close()
+
+	baseClient, _ := client.NewClient(client.WithBaseURL(server.URL), client.WithHTTPClient(server.Client()))
+	c := public.NewClient(baseClient)
+
+	req := &publicmodels.GetWeekCandlesRequest{
+		Market: "KRW-BTC",
+		Count:  10,
+	}
+	candles, err := c.GetWeekCandles(req)
+	assertNil(t, err)
+	assertEqual(t, 1, len(candles))
+	assertEqual(t, 50500000.0, candles[0].TradePrice)
+}
+
+func TestGetMonthCandles(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertEqual(t, "/v1/candles/months", r.URL.Path)
+		assertEqual(t, "KRW-BTC", r.URL.Query().Get("market"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[{"market":"KRW-BTC","candle_date_time_kst":"2024-01-01T00:00:00","opening_price":50000000,"high_price":51000000,"low_price":49000000,"trade_price":50500000,"timestamp":1704067200000,"candle_acc_trade_price":1000000000,"candle_acc_trade_volume":20.0,"prev_closing_price":50000000,"change_price":500000,"change_rate":0.01}]`))
+	}))
+	defer server.Close()
+
+	baseClient, _ := client.NewClient(client.WithBaseURL(server.URL), client.WithHTTPClient(server.Client()))
+	c := public.NewClient(baseClient)
+
+	req := &publicmodels.GetMonthCandlesRequest{
+		Market: "KRW-BTC",
+		Count:  10,
+	}
+	candles, err := c.GetMonthCandles(req)
+	assertNil(t, err)
+	assertEqual(t, 1, len(candles))
+	assertEqual(t, 50500000.0, candles[0].TradePrice)
+}
+
 func TestGetTicker(t *testing.T) {
 	baseClient, _ := client.NewClient()
 	c := public.NewClient(baseClient)
