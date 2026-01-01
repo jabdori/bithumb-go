@@ -28,6 +28,12 @@ type Order struct {
 	PaidFee string `json:"paid_fee"`
 	// State is the order state.
 	State string `json:"state"`
+	// Locked is the amount locked in the order.
+	Locked string `json:"locked"`
+	// ExecutedVolume is the executed volume.
+	ExecutedVolume string `json:"executed_volume"`
+	// TradesCount is the number of trades.
+	TradesCount int `json:"trades_count"`
 	// Trades is the list of trades executed for this order.
 	Trades []Trade `json:"trades"`
 }
@@ -36,6 +42,8 @@ type Order struct {
 type Trade struct {
 	// UUID is the trade identifier.
 	UUID string `json:"uuid"`
+	// Market is the market identifier.
+	Market string `json:"market"`
 	// Price is the trade price.
 	Price string `json:"price"`
 	// Volume is the trade volume.
@@ -44,6 +52,8 @@ type Trade struct {
 	Funds string `json:"funds"`
 	// Side is the trade side.
 	Side string `json:"side"`
+	// CreatedAt is the trade creation timestamp.
+	CreatedAt string `json:"created_at"`
 }
 
 // Order side constants.
@@ -116,6 +126,52 @@ type CancelOrderRequest struct {
 func (r *CancelOrderRequest) Validate() error {
 	if r.UUID == "" {
 		return fmt.Errorf("UUID is required")
+	}
+	return nil
+}
+
+// GetOrderDetailRequest is a request to get order detail.
+type GetOrderDetailRequest struct {
+	// UUID is the order identifier.
+	UUID string
+}
+
+// Validate checks if the request is valid.
+func (r *GetOrderDetailRequest) Validate() error {
+	if r.UUID == "" {
+		return fmt.Errorf("UUID is required")
+	}
+	return nil
+}
+
+// GetOrdersRequest is a request to get order list.
+type GetOrdersRequest struct {
+	// Market is the market identifier (e.g., "KRW-BTC").
+	Market string
+	// UUIDs is the list of order UUIDs.
+	UUIDs []string
+	// State is the order state filter.
+	State string
+	// States is the list of order states.
+	States []string
+	// Page is the page number (default: 1).
+	Page int
+	// Limit is the limit of orders per page (default: 100, max: 100).
+	Limit int
+	// OrderBy is the sort order ("asc" or "desc", default: "desc").
+	OrderBy string
+}
+
+// Validate checks if the request is valid.
+func (r *GetOrdersRequest) Validate() error {
+	if r.Page < 1 {
+		r.Page = 1
+	}
+	if r.Limit < 1 || r.Limit > 100 {
+		r.Limit = 100
+	}
+	if r.OrderBy != "asc" && r.OrderBy != "desc" {
+		r.OrderBy = "desc"
 	}
 	return nil
 }
