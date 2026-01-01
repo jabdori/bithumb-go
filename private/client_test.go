@@ -99,3 +99,31 @@ func TestGetTWAPOrders(t *testing.T) {
 	}
 	t.Skip("TODO: Add mock server test")
 }
+
+func TestGetCoinDeposits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test - requires API credentials")
+	}
+	t.Skip("TODO: Add mock server test")
+}
+
+func TestGetCoinWithdrawals(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test - requires API credentials")
+	}
+	t.Skip("TODO: Add mock server test")
+}
+
+func TestGetAssetStatus(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test - requires API credentials")
+	}
+	t.Skip("TODO: Add mock server test")
+}
+
+func TestGetDepositAddresses(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test - requires API credentials")
+	}
+	t.Skip("TODO: Add mock server test")
+}

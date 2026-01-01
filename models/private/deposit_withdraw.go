@@ -1,5 +1,10 @@
 package private
 
+import (
+	"fmt"
+	"strings"
+)
+
 // DepositState represents deposit state
 type DepositState string
 
@@ -105,4 +110,114 @@ type KRWWithdrawal struct {
 	State       string `json:"state"`
 	CreatedAt   string `json:"created_at"`
 	CompletedAt string `json:"completed_at"`
+}
+
+// GetCoinDepositsRequest represents request for coin deposit list
+type GetCoinDepositsRequest struct {
+	Currency string
+	State    DepositState
+	UUIDs    []string
+	Page     int
+	Limit    int
+	OrderBy  string
+}
+
+// Validate validates GetCoinDepositsRequest
+func (r *GetCoinDepositsRequest) Validate() error {
+	if r.Limit < 0 || r.Limit > 100 {
+		return fmt.Errorf("limit must be between 0 and 100")
+	}
+	if r.State != "" {
+		validStates := []DepositState{
+			DepositStateRequestedPending,
+			DepositStateRequestedSystemRejected,
+			DepositStateRequestedProcessing,
+			DepositStateRequestedAdminRejected,
+			DepositStateProcessing,
+			DepositStateAccepted,
+			DepositStateCancelled,
+		}
+		valid := false
+		for _, s := range validStates {
+			if r.State == s {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid state: %s", r.State)
+		}
+	}
+	if r.OrderBy != "" {
+		orderByLower := strings.ToLower(r.OrderBy)
+		if orderByLower != "asc" && orderByLower != "desc" {
+			return fmt.Errorf("order_by must be 'asc' or 'desc', got: %s", r.OrderBy)
+		}
+	}
+	return nil
+}
+
+// GetCoinWithdrawalsRequest represents request for coin withdrawal list
+type GetCoinWithdrawalsRequest struct {
+	Currency string
+	State    WithdrawalState
+	UUIDs    []string
+	TXIDs    []string
+	Page     int
+	Limit    int
+	OrderBy  string
+}
+
+// Validate validates GetCoinWithdrawalsRequest
+func (r *GetCoinWithdrawalsRequest) Validate() error {
+	if r.Limit < 0 || r.Limit > 100 {
+		return fmt.Errorf("limit must be between 0 and 100")
+	}
+	if r.State != "" {
+		validStates := []WithdrawalState{
+			WithdrawalStateProcessing,
+			WithdrawalStateDone,
+			WithdrawalStateCanceled,
+		}
+		valid := false
+		for _, s := range validStates {
+			if r.State == s {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid state: %s", r.State)
+		}
+	}
+	if r.OrderBy != "" {
+		orderByLower := strings.ToLower(r.OrderBy)
+		if orderByLower != "asc" && orderByLower != "desc" {
+			return fmt.Errorf("order_by must be 'asc' or 'desc', got: %s", r.OrderBy)
+		}
+	}
+	return nil
+}
+
+// GetAssetStatusRequest represents request for asset status
+type GetAssetStatusRequest struct {
+	Currency string
+}
+
+// Validate validates GetAssetStatusRequest (empty for consistency)
+func (r *GetAssetStatusRequest) Validate() error {
+	return nil
+}
+
+// GetDepositAddressRequest represents request for deposit address
+type GetDepositAddressRequest struct {
+	Currency string
+}
+
+// Validate validates GetDepositAddressRequest
+func (r *GetDepositAddressRequest) Validate() error {
+	if r.Currency == "" {
+		return fmt.Errorf("currency is required")
+	}
+	return nil
 }

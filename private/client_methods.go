@@ -505,3 +505,170 @@ func (c *Client) CancelTWAPOrderWithContext(ctx context.Context, req *private.Ca
 	io.Copy(io.Discard, resp.Body)
 	return nil
 }
+
+// GetCoinDeposits retrieves coin deposit list
+func (c *Client) GetCoinDeposits(req *private.GetCoinDepositsRequest) ([]private.CoinDeposit, error) {
+	return c.GetCoinDepositsWithContext(context.Background(), req)
+}
+
+func (c *Client) GetCoinDepositsWithContext(ctx context.Context, req *private.GetCoinDepositsRequest) ([]private.CoinDeposit, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "invalid request", Err: err}
+	}
+
+	url := c.base.BaseURL() + "/v1/coin/deposit"
+
+	params := query.New()
+	if req.Currency != "" {
+		params.Add("currency", req.Currency)
+	}
+	if req.State != "" {
+		params.Add("state", string(req.State))
+	}
+	if len(req.UUIDs) > 0 {
+		params.AddStringSlice("uuids", req.UUIDs)
+	}
+	params.AddInt("page", req.Page)
+	params.AddInt("limit", req.Limit)
+	if req.OrderBy != "" {
+		params.Add("order_by", req.OrderBy)
+	}
+
+	if queryStr := params.Encode(); queryStr != "" {
+		url += "?" + queryStr
+	}
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var deposits []private.CoinDeposit
+	if err := json.Unmarshal(body, &deposits); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return deposits, nil
+}
+
+// GetCoinWithdrawals retrieves coin withdrawal list
+func (c *Client) GetCoinWithdrawals(req *private.GetCoinWithdrawalsRequest) ([]private.CoinWithdrawal, error) {
+	return c.GetCoinWithdrawalsWithContext(context.Background(), req)
+}
+
+func (c *Client) GetCoinWithdrawalsWithContext(ctx context.Context, req *private.GetCoinWithdrawalsRequest) ([]private.CoinWithdrawal, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "invalid request", Err: err}
+	}
+
+	url := c.base.BaseURL() + "/v1/coin/withdraw"
+
+	params := query.New()
+	if req.Currency != "" {
+		params.Add("currency", req.Currency)
+	}
+	if req.State != "" {
+		params.Add("state", string(req.State))
+	}
+	if len(req.UUIDs) > 0 {
+		params.AddStringSlice("uuids", req.UUIDs)
+	}
+	if len(req.TXIDs) > 0 {
+		params.AddStringSlice("txids", req.TXIDs)
+	}
+	params.AddInt("page", req.Page)
+	params.AddInt("limit", req.Limit)
+	if req.OrderBy != "" {
+		params.Add("order_by", req.OrderBy)
+	}
+
+	if queryStr := params.Encode(); queryStr != "" {
+		url += "?" + queryStr
+	}
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var withdrawals []private.CoinWithdrawal
+	if err := json.Unmarshal(body, &withdrawals); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return withdrawals, nil
+}
+
+// GetAssetStatus retrieves deposit/withdrawal status
+func (c *Client) GetAssetStatus(req *private.GetAssetStatusRequest) ([]private.AssetStatus, error) {
+	return c.GetAssetStatusWithContext(context.Background(), req)
+}
+
+func (c *Client) GetAssetStatusWithContext(ctx context.Context, req *private.GetAssetStatusRequest) ([]private.AssetStatus, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "invalid request", Err: err}
+	}
+
+	url := c.base.BaseURL() + "/v1/asset/status"
+
+	if req.Currency != "" {
+		url += "?currency=" + req.Currency
+	}
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var statuses []private.AssetStatus
+	if err := json.Unmarshal(body, &statuses); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return statuses, nil
+}
+
+// GetDepositAddresses retrieves all deposit addresses
+func (c *Client) GetDepositAddresses() ([]private.DepositAddress, error) {
+	return c.GetDepositAddressesWithContext(context.Background())
+}
+
+func (c *Client) GetDepositAddressesWithContext(ctx context.Context) ([]private.DepositAddress, error) {
+	url := c.base.BaseURL() + "/v1/addresses"
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var addresses []private.DepositAddress
+	if err := json.Unmarshal(body, &addresses); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return addresses, nil
+}
