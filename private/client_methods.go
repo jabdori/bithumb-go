@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	bithumbgo "github.com/hysuki/bithumb-go"
+	"github.com/hysuki/bithumb-go/internal/query"
 	"github.com/hysuki/bithumb-go/models/private"
 )
 
@@ -382,4 +383,125 @@ func (c *Client) GetOrderChanceWithContext(ctx context.Context, req *private.Get
 	}
 
 	return &chance, nil
+}
+
+// PlaceTWAPOrder places a TWAP algorithm order
+func (c *Client) PlaceTWAPOrder(req *private.PlaceTWAPOrderRequest) (*private.TWAPOrder, error) {
+	return c.PlaceTWAPOrderWithContext(context.Background(), req)
+}
+
+// PlaceTWAPOrderWithContext places a TWAP algorithm order with context
+func (c *Client) PlaceTWAPOrderWithContext(ctx context.Context, req *private.PlaceTWAPOrderRequest) (*private.TWAPOrder, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: fmt.Sprintf("invalid request: %v", err), Err: err}
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "marshal request failed", Err: err}
+	}
+
+	url := c.base.BaseURL() + "/v2/algo_orders/twap"
+
+	resp, err := c.doWithAuth(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var order private.TWAPOrder
+	if err := json.Unmarshal(respBody, &order); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return &order, nil
+}
+
+// GetTWAPOrders retrieves TWAP order list
+func (c *Client) GetTWAPOrders(req *private.GetTWAPOrdersRequest) ([]private.TWAPOrder, error) {
+	return c.GetTWAPOrdersWithContext(context.Background(), req)
+}
+
+// GetTWAPOrdersWithContext retrieves TWAP order list with context
+func (c *Client) GetTWAPOrdersWithContext(ctx context.Context, req *private.GetTWAPOrdersRequest) ([]private.TWAPOrder, error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: fmt.Sprintf("invalid request: %v", err), Err: err}
+	}
+
+	url := c.base.BaseURL() + "/v1/algo_orders/twap"
+
+	// Build query parameters
+	params := query.New()
+	if req.Market != "" {
+		params.Add("market", req.Market)
+	}
+	if len(req.UUIDs) > 0 {
+		params.AddStringSlice("uuids", req.UUIDs)
+	}
+	if req.State != "" {
+		params.Add("state", string(req.State))
+	}
+	if req.NextKey != "" {
+		params.Add("next_key", req.NextKey)
+	}
+	params.AddInt("limit", req.Limit)
+	if req.OrderBy != "" {
+		params.Add("order_by", req.OrderBy)
+	}
+
+	if queryStr := params.Encode(); queryStr != "" {
+		url += "?" + queryStr
+	}
+
+	resp, err := c.doWithAuth(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var orders []private.TWAPOrder
+	if err := json.Unmarshal(body, &orders); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return orders, nil
+}
+
+// CancelTWAPOrder cancels a TWAP order
+func (c *Client) CancelTWAPOrder(req *private.CancelTWAPOrderRequest) error {
+	return c.CancelTWAPOrderWithContext(context.Background(), req)
+}
+
+// CancelTWAPOrderWithContext cancels a TWAP order with context
+func (c *Client) CancelTWAPOrderWithContext(ctx context.Context, req *private.CancelTWAPOrderRequest) error {
+	if err := req.Validate(); err != nil {
+		return &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: fmt.Sprintf("invalid request: %v", err), Err: err}
+	}
+
+	url := fmt.Sprintf("%s/v2/algo_orders/twap/%s", c.base.BaseURL(), req.AlgoOrderID)
+
+	reqBody, err := json.Marshal(map[string]string{})
+	if err != nil {
+		return &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "marshal request failed", Err: err}
+	}
+
+	resp, err := c.doWithAuth(ctx, http.MethodDelete, url, bytes.NewReader(reqBody))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Drain the response body to allow connection reuse
+	io.Copy(io.Discard, resp.Body)
+	return nil
 }

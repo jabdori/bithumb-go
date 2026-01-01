@@ -78,3 +78,24 @@ func TestGetOrderChance(t *testing.T) {
 		assertEqual(t, "KRW-BTC", chance.Market.ID)
 	}
 }
+
+func TestPlaceTWAPOrder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test - requires API credentials")
+	}
+	t.Skip("TODO: Add mock server test")
+}
+
+func TestCancelTWAPOrder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+	t.Skip("TODO: Add mock server test")
+}
+
+func TestGetTWAPOrders(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+	t.Skip("TODO: Add mock server test")
+}
