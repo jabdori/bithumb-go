@@ -11,6 +11,7 @@ import (
 
 	bithumbgo "github.com/hysuki/bithumb-go"
 	"github.com/hysuki/bithumb-go/internal/base"
+	"github.com/hysuki/bithumb-go/internal/query"
 	"github.com/hysuki/bithumb-go/models/public"
 )
 
@@ -389,4 +390,46 @@ func (c *Client) GetWarningsWithContext(ctx context.Context) ([]public.Warning, 
 	}
 
 	return warnings, nil
+}
+
+// GetNotices retrieves Bithumb announcements
+func (c *Client) GetNotices(req *public.GetNoticesRequest) ([]public.Notice, *bithumbgo.Error) {
+	return c.GetNoticesWithContext(context.Background(), req)
+}
+
+// GetNoticesWithContext retrieves Bithumb announcements with context
+func (c *Client) GetNoticesWithContext(ctx context.Context, req *public.GetNoticesRequest) ([]public.Notice, *bithumbgo.Error) {
+	if err := req.Validate(); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "invalid request", Err: err}
+	}
+
+	params := query.New().AddInt("count", req.Count)
+	url := c.base.BaseURL() + "/v1/notice?" + params.Encode()
+
+	resp, err := c.do(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, &bithumbgo.Error{
+			Type:       bithumbgo.ErrorTypeHTTP,
+			Message:    fmt.Sprintf("API error: status %d: %s", resp.StatusCode, string(body)),
+			HTTPStatus: resp.StatusCode,
+		}
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var notices []public.Notice
+	if err := json.Unmarshal(body, &notices); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return notices, nil
 }

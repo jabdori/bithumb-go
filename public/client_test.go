@@ -2,6 +2,7 @@ package public_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -238,4 +239,42 @@ func TestGetWarnings(t *testing.T) {
 	assertEqual(t, "KRW-BTC", warnings[0].Market)
 	assertEqual(t, publicmodels.WarningPriceSuddenFluctuation, warnings[0].WarningType)
 	assertEqual(t, "2026-01-31 23:59:59", warnings[0].EndDate)
+}
+
+func TestGetNotices(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertEqual(t, "/v1/notice", r.URL.Path)
+		assertEqual(t, "5", r.URL.Query().Get("count"))
+
+		notices := []publicmodels.Notice{
+			{
+				Categories:  []string{"공지"},
+				Title:       "테스트 공지",
+				PCURL:       "https://example.com/notice/1",
+				PublishedAt: "2026-01-01 10:00:00",
+				ModifiedAt:  "2026-01-01 10:00:00",
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(notices)
+	}))
+	defer server.Close()
+
+	baseClient, _ := client.NewClient(client.WithBaseURL(server.URL), client.WithHTTPClient(server.Client()))
+	c := public.NewClient(baseClient)
+
+	notices, bithumbErr := c.GetNotices(&publicmodels.GetNoticesRequest{Count: 5})
+	if bithumbErr != nil {
+		t.Fatalf("GetNotices failed: %v", bithumbErr)
+	}
+
+	if len(notices) != 1 {
+		t.Fatalf("Expected 1 notice, got %d", len(notices))
+	}
+
+	if notices[0].Title != "테스트 공지" {
+		t.Errorf("Expected title '테스트 공지', got %s", notices[0].Title)
+	}
 }
