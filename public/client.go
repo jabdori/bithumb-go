@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
+	bithumbgo "github.com/hysuki/bithumb-go"
 	"github.com/hysuki/bithumb-go/internal/base"
 	"github.com/hysuki/bithumb-go/models/public"
 )
@@ -357,4 +358,35 @@ func (c *Client) GetDayCandlesWithContext(ctx context.Context, req *public.GetDa
 	}
 
 	return candles, nil
+}
+
+// GetWarnings retrieves market warning alerts.
+func (c *Client) GetWarnings() ([]public.Warning, *bithumbgo.Error) {
+	return c.GetWarningsWithContext(context.Background())
+}
+
+// GetWarningsWithContext retrieves market warning alerts with context.
+func (c *Client) GetWarningsWithContext(ctx context.Context) ([]public.Warning, *bithumbgo.Error) {
+	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/market/warning", nil), nil)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeHTTP, Message: fmt.Sprintf("API error: status %d: %s", resp.StatusCode, string(body)), HTTPStatus: resp.StatusCode}
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var warnings []public.Warning
+	if err := json.Unmarshal(body, &warnings); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return warnings, nil
 }

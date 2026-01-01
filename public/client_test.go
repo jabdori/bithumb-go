@@ -217,3 +217,25 @@ func TestGetCandlestick(t *testing.T) {
 		t.Errorf("Market = %v, want KRW-BTC", candles[0].Market)
 	}
 }
+
+func TestGetWarnings(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertEqual(t, "/v1/market/warning", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[{"market":"KRW-BTC","warning_type":"PRICE_SUDDEN_FLUCTUATION","end_date":"2026-01-31 23:59:59"}]`))
+	}))
+	defer server.Close()
+
+	baseClient, _ := client.NewClient(client.WithBaseURL(server.URL), client.WithHTTPClient(server.Client()))
+	c := public.NewClient(baseClient)
+
+	warnings, bithumbErr := c.GetWarnings()
+	if bithumbErr != nil {
+		t.Fatalf("Expected nil error, got %v", bithumbErr)
+	}
+	assertEqual(t, 1, len(warnings))
+	assertEqual(t, "KRW-BTC", warnings[0].Market)
+	assertEqual(t, publicmodels.WarningPriceSuddenFluctuation, warnings[0].WarningType)
+	assertEqual(t, "2026-01-31 23:59:59", warnings[0].EndDate)
+}
