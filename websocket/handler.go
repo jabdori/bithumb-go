@@ -17,8 +17,21 @@ func (c *Client) handleMessage(data []byte) error {
 	}
 
 	// Check for error response
-	if _, hasError := raw["error"]; hasError {
+	if errData, hasError := raw["error"]; hasError {
 		c.logger.Error("WebSocket error response", logger.F("data", string(data)))
+
+		// Parse error and call Error() callback on all handlers
+		var wsErrResp WSErrorResponse
+		if err := json.Unmarshal(data, &wsErrResp); err == nil {
+			c.mu.RLock()
+			for _, handler := range c.handlers {
+				handler.Error(wsErrResp.Error)
+			}
+			c.mu.RUnlock()
+		} else {
+			// If we can't parse the error properly, log the raw data
+			c.logger.Error("Failed to parse WebSocket error", logger.F("error", err), logger.F("raw_error", errData))
+		}
 		return nil // Error responses are logged but don't stop processing
 	}
 
@@ -36,5 +49,5 @@ func (c *Client) handleMessage(data []byte) error {
 		return nil // No handler registered for this type
 	}
 
-	return handler(data)
+	return handler.Handle(data)
 }

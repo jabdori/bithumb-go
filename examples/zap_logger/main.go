@@ -8,7 +8,7 @@ import (
 
 	"github.com/hysuki/bithumb-go/client"
 	"github.com/hysuki/bithumb-go/logger"
-	"github.com/hysuki/bithumb-go/models/public"
+	wsmodels "github.com/hysuki/bithumb-go/models/websocket"
 	"github.com/hysuki/bithumb-go/websocket"
 	"go.uber.org/zap"
 )
@@ -67,23 +67,23 @@ func main() {
 
 	// Setup message handlers
 	handlers := websocket.MessageHandlers{
-		Ticker: func(msg []byte) error {
-			var ticker public.Ticker
+		Ticker: websocket.HandlerFunc(func(msg []byte) error {
+			var ticker wsmodels.TickerMessage
 			if err := json.Unmarshal(msg, &ticker); err != nil {
 				return err
 			}
-			fmt.Printf("[Ticker] %s: %.0f KRW\n", ticker.Market, ticker.TradePrice)
+			fmt.Printf("[Ticker] %s: %.0f KRW\n", ticker.Code, ticker.TradePrice)
 			return nil
-		},
+		}),
 
-		OrderBook: func(msg []byte) error {
-			var orderbook public.OrderBook
+		OrderBook: websocket.HandlerFunc(func(msg []byte) error {
+			var orderbook wsmodels.OrderBookMessage
 			if err := json.Unmarshal(msg, &orderbook); err != nil {
 				return err
 			}
-			fmt.Printf("[OrderBook] %s: %d levels\n", orderbook.Market, len(orderbook.OrderBookUnits))
+			fmt.Printf("[OrderBook] %s: %d levels\n", orderbook.Code, len(orderbook.OrderBookUnits))
 			return nil
-		},
+		}),
 	}
 
 	// Subscribe to ticker and orderbook for BTC

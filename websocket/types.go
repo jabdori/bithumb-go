@@ -30,8 +30,26 @@ const (
 	SubscriptionTypeMyAsset SubscriptionType = "myAsset"
 )
 
-// MessageHandler handles WebSocket messages.
-type MessageHandler func(msg []byte) error
+// MessageHandler handles WebSocket messages for a subscription type.
+type MessageHandler interface {
+	Handle(data []byte) error
+	Error(err WSError)
+}
+
+// HandlerFunc is an adapter to allow ordinary functions to be used as message handlers.
+// If Error() method is not called, the error is ignored (no-op implementation).
+type HandlerFunc func(data []byte) error
+
+// Handle calls the function to handle the message.
+func (f HandlerFunc) Handle(data []byte) error {
+	return f(data)
+}
+
+// Error provides a no-op error callback for HandlerFunc.
+// Users can implement MessageHandler interface directly to customize error handling.
+func (f HandlerFunc) Error(err WSError) {
+	// Default: no-op, users can implement MessageHandler interface directly to override
+}
 
 // MessageHandlers holds handlers for different subscription types.
 type MessageHandlers struct {

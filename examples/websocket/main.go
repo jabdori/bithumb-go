@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/hysuki/bithumb-go/client"
-	"github.com/hysuki/bithumb-go/models/public"
+	wsmodels "github.com/hysuki/bithumb-go/models/websocket"
 	"github.com/hysuki/bithumb-go/websocket"
 )
 
@@ -49,13 +49,13 @@ func main() {
 	orderbookCount := 0
 
 	handlers := websocket.MessageHandlers{
-		Ticker: func(msg []byte) error {
+		Ticker: websocket.HandlerFunc(func(msg []byte) error {
 			mu.Lock()
 			tickerCount++
 			count := tickerCount
 			mu.Unlock()
 
-			var ticker public.Ticker
+			var ticker wsmodels.TickerMessage
 			if err := json.Unmarshal(msg, &ticker); err != nil {
 				return err
 			}
@@ -63,21 +63,21 @@ func main() {
 			// Print first 10 tickers in detail
 			if count <= 10 {
 				fmt.Printf("[Ticker #%d] %s: %.0f KRW (%.2f%%)\n",
-					count, ticker.Market, ticker.TradePrice, ticker.ChangeRate*100)
+					count, ticker.Code, ticker.TradePrice, ticker.ChangeRate*100)
 			} else if count == 11 {
 				fmt.Println("[Ticker] ... (더 이상 표시 안 함)")
 			}
 
 			return nil
-		},
+		}),
 
-		OrderBook: func(msg []byte) error {
+		OrderBook: websocket.HandlerFunc(func(msg []byte) error {
 			mu.Lock()
 			orderbookCount++
 			count := orderbookCount
 			mu.Unlock()
 
-			var orderbook public.OrderBook
+			var orderbook wsmodels.OrderBookMessage
 			if err := json.Unmarshal(msg, &orderbook); err != nil {
 				return err
 			}
@@ -85,18 +85,18 @@ func main() {
 			// Print first 5 orderbooks in detail
 			if count <= 5 {
 				fmt.Printf("[OrderBook #%d] %s: %d 호가 단위\n",
-					count, orderbook.Market, len(orderbook.OrderBookUnits))
+					count, orderbook.Code, len(orderbook.OrderBookUnits))
 			} else if count == 6 {
 				fmt.Println("[OrderBook] ... (더 이상 표시 안 함)")
 			}
 
 			return nil
-		},
+		}),
 
-		Trade: func(msg []byte) error {
+		Trade: websocket.HandlerFunc(func(msg []byte) error {
 			// Just acknowledge trade messages
 			return nil
-		},
+		}),
 	}
 
 	// Subscribe to ticker and orderbook for BTC
