@@ -72,3 +72,39 @@ func TestWSErrorConstants(t *testing.T) {
 		})
 	}
 }
+
+func TestWSError_AllErrorTypes(t *testing.T) {
+	errorCases := []struct {
+		name          string
+		errorName     string
+		expectedConst string
+	}{
+		{"WrongFormat", "WRONG_FORMAT", WSErrWrongFormat},
+		{"NoTicket", "NO_TICKET", WSErrNoTicket},
+		{"NoType", "NO_TYPE", WSErrNoType},
+		{"NoCodes", "NO_CODES", WSErrNoCodes},
+		{"InvalidParam", "INVALID_PARAM", WSErrInvalidParam},
+		{"InvalidParamFormat", "INVALID_PARAM_FORMAT", WSErrInvalidParamFormat},
+	}
+
+	for _, tc := range errorCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data := []byte(`{
+                "error": {
+                    "name": "` + tc.errorName + `",
+                    "message": "Test error message"
+                }
+            }`)
+
+			var resp WSErrorResponse
+			err := json.Unmarshal(data, &resp)
+			if err != nil {
+				t.Fatalf("Failed to unmarshal: %v", err)
+			}
+
+			if resp.Error.Name != tc.expectedConst {
+				t.Errorf("Expected name %s, got %s", tc.expectedConst, resp.Error.Name)
+			}
+		})
+	}
+}
