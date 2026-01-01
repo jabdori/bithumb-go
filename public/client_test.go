@@ -278,3 +278,75 @@ func TestGetNotices(t *testing.T) {
 		t.Errorf("Expected title '테스트 공지', got %s", notices[0].Title)
 	}
 }
+
+func TestGetChainFees(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v2/fee/inout/ALL" {
+			t.Errorf("Expected path /v2/fee/inout/ALL, got %s", r.URL.Path)
+		}
+
+		fees := []publicmodels.ChainFee{
+			{
+				Name:     "비트코인",
+				Currency: "BTC",
+				Networks: []publicmodels.NetworkFee{
+					{
+						NetName:                "BTC",
+						DepositFeeQuantity:     "0",
+						DepositMinimumQuantity: "0.0004",
+						WithdrawFeeQuantity:    "0.0005",
+						WithdrawMinimumQuantity: "0.001",
+					},
+				},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(fees)
+	}))
+	defer server.Close()
+
+	baseClient, _ := client.NewClient(client.WithBaseURL(server.URL), client.WithHTTPClient(server.Client()))
+	c := public.NewClient(baseClient)
+
+	fees, bithumbErr := c.GetChainFees("ALL")
+	if bithumbErr != nil {
+		t.Fatalf("GetChainFees failed: %v", bithumbErr)
+	}
+
+	if len(fees) != 1 {
+		t.Fatalf("Expected 1 fee entry, got %d", len(fees))
+	}
+
+	if fees[0].Currency != "BTC" {
+		t.Errorf("Expected currency BTC, got %s", fees[0].Currency)
+	}
+
+	if len(fees[0].Networks) != 1 {
+		t.Fatalf("Expected 1 network, got %d", len(fees[0].Networks))
+	}
+
+	if fees[0].Networks[0].NetName != "BTC" {
+		t.Errorf("Expected net_name BTC, got %s", fees[0].Networks[0].NetName)
+	}
+}
+
+func TestGetChainFees_EmptyCurrency(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	baseClient, _ := client.NewClient(client.WithBaseURL(server.URL), client.WithHTTPClient(server.Client()))
+	c := public.NewClient(baseClient)
+
+	_, bithumbErr := c.GetChainFees("")
+	if bithumbErr == nil {
+		t.Fatal("Expected error for empty currency, got nil")
+	}
+
+	if bithumbErr.Message != "currency is required" {
+		t.Errorf("Expected error message 'currency is required', got '%s'", bithumbErr.Message)
+	}
+}

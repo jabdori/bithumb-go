@@ -433,3 +433,44 @@ func (c *Client) GetNoticesWithContext(ctx context.Context, req *public.GetNotic
 
 	return notices, nil
 }
+
+// GetChainFees retrieves deposit/withdrawal fees
+func (c *Client) GetChainFees(currency string) ([]public.ChainFee, *bithumbgo.Error) {
+	return c.GetChainFeesWithContext(context.Background(), currency)
+}
+
+// GetChainFeesWithContext retrieves deposit/withdrawal fees with context
+func (c *Client) GetChainFeesWithContext(ctx context.Context, currency string) ([]public.ChainFee, *bithumbgo.Error) {
+	if currency == "" {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "currency is required"}
+	}
+
+	url := c.base.BaseURL() + fmt.Sprintf("/v2/fee/inout/%s", currency)
+
+	resp, err := c.do(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, &bithumbgo.Error{
+			Type:       bithumbgo.ErrorTypeHTTP,
+			Message:    fmt.Sprintf("API error: status %d: %s", resp.StatusCode, string(body)),
+			HTTPStatus: resp.StatusCode,
+		}
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
+	}
+
+	var fees []public.ChainFee
+	if err := json.Unmarshal(body, &fees); err != nil {
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
+	}
+
+	return fees, nil
+}
