@@ -50,13 +50,31 @@ func (c *Client) do(ctx context.Context, method, url string, body io.Reader) (*h
 	return c.base.HTTPClient().Do(req)
 }
 
+// handleHTTPError creates a standardized error from HTTP response
+func handleHTTPError(resp *http.Response) *bithumbgo.Error {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &bithumbgo.Error{
+			Type:       bithumbgo.ErrorTypeHTTP,
+			Message:    fmt.Sprintf("API error: status %d (failed to read body)", resp.StatusCode),
+			HTTPStatus: resp.StatusCode,
+			Err:        err,
+		}
+	}
+	return &bithumbgo.Error{
+		Type:       bithumbgo.ErrorTypeHTTP,
+		Message:    fmt.Sprintf("API error: status %d: %s", resp.StatusCode, string(body)),
+		HTTPStatus: resp.StatusCode,
+	}
+}
+
 // GetTicker retrieves current ticker information.
-func (c *Client) GetTicker(req *public.GetTickerRequest) ([]public.Ticker, error) {
+func (c *Client) GetTicker(req *public.GetTickerRequest) ([]public.Ticker, *bithumbgo.Error) {
 	return c.GetTickerWithContext(context.Background(), req)
 }
 
 // GetTickerWithContext retrieves current ticker information with context.
-func (c *Client) GetTickerWithContext(ctx context.Context, req *public.GetTickerRequest) ([]public.Ticker, error) {
+func (c *Client) GetTickerWithContext(ctx context.Context, req *public.GetTickerRequest) ([]public.Ticker, *bithumbgo.Error) {
 	params := map[string]string{}
 	if len(req.Markets) > 0 {
 		params["markets"] = req.Markets[0]
@@ -64,30 +82,34 @@ func (c *Client) GetTickerWithContext(ctx context.Context, req *public.GetTicker
 
 	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/ticker", params), nil)
 	if err != nil {
-		return nil, err
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		return nil, handleHTTPError(resp)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
 	}
 
 	var tickers []public.Ticker
 	if err := json.Unmarshal(body, &tickers); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
 	}
 
 	return tickers, nil
 }
 
 // GetOrderBook retrieves order book information.
-func (c *Client) GetOrderBook(req *public.GetOrderBookRequest) (*public.OrderBook, error) {
+func (c *Client) GetOrderBook(req *public.GetOrderBookRequest) (*public.OrderBook, *bithumbgo.Error) {
 	return c.GetOrderBookWithContext(context.Background(), req)
 }
 
 // GetOrderBookWithContext retrieves order book information with context.
-func (c *Client) GetOrderBookWithContext(ctx context.Context, req *public.GetOrderBookRequest) (*public.OrderBook, error) {
+func (c *Client) GetOrderBookWithContext(ctx context.Context, req *public.GetOrderBookRequest) (*public.OrderBook, *bithumbgo.Error) {
 	params := map[string]string{}
 	if len(req.Markets) > 0 {
 		params["markets"] = req.Markets[0]
@@ -95,34 +117,38 @@ func (c *Client) GetOrderBookWithContext(ctx context.Context, req *public.GetOrd
 
 	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/orderbook", params), nil)
 	if err != nil {
-		return nil, err
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		return nil, handleHTTPError(resp)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
 	}
 
 	var orderbooks []public.OrderBook
 	if err := json.Unmarshal(body, &orderbooks); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
 	}
 
 	if len(orderbooks) == 0 {
-		return nil, fmt.Errorf("no orderbook data returned")
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "no orderbook data returned"}
 	}
 
 	return &orderbooks[0], nil
 }
 
 // GetRecentTrades retrieves recent trade information.
-func (c *Client) GetRecentTrades(req *public.GetRecentTradesRequest) ([]public.Trade, error) {
+func (c *Client) GetRecentTrades(req *public.GetRecentTradesRequest) ([]public.Trade, *bithumbgo.Error) {
 	return c.GetRecentTradesWithContext(context.Background(), req)
 }
 
 // GetRecentTradesWithContext retrieves recent trade information with context.
-func (c *Client) GetRecentTradesWithContext(ctx context.Context, req *public.GetRecentTradesRequest) ([]public.Trade, error) {
+func (c *Client) GetRecentTradesWithContext(ctx context.Context, req *public.GetRecentTradesRequest) ([]public.Trade, *bithumbgo.Error) {
 	params := map[string]string{
 		"market": req.Market,
 	}
@@ -135,30 +161,34 @@ func (c *Client) GetRecentTradesWithContext(ctx context.Context, req *public.Get
 
 	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/trades/ticks", params), nil)
 	if err != nil {
-		return nil, err
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		return nil, handleHTTPError(resp)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
 	}
 
 	var trades []public.Trade
 	if err := json.Unmarshal(body, &trades); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
 	}
 
 	return trades, nil
 }
 
 // GetCandlestick retrieves candlestick data.
-func (c *Client) GetCandlestick(req *public.GetCandlestickRequest) ([]public.Candle, error) {
+func (c *Client) GetCandlestick(req *public.GetCandlestickRequest) ([]public.Candle, *bithumbgo.Error) {
 	return c.GetCandlestickWithContext(context.Background(), req)
 }
 
 // GetCandlestickWithContext retrieves candlestick data with context.
-func (c *Client) GetCandlestickWithContext(ctx context.Context, req *public.GetCandlestickRequest) ([]public.Candle, error) {
+func (c *Client) GetCandlestickWithContext(ctx context.Context, req *public.GetCandlestickRequest) ([]public.Candle, *bithumbgo.Error) {
 	params := map[string]string{"market": req.Market}
 	if req.To != "" {
 		params["to"] = req.To
@@ -170,32 +200,36 @@ func (c *Client) GetCandlestickWithContext(ctx context.Context, req *public.GetC
 	url := fmt.Sprintf("/v1/candles/minutes/%s", req.Unit)
 	resp, err := c.do(ctx, http.MethodGet, c.buildURL(url, params), nil)
 	if err != nil {
-		return nil, err
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		return nil, handleHTTPError(resp)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
 	}
 
 	var candles []public.Candle
 	if err := json.Unmarshal(body, &candles); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
 	}
 
 	return candles, nil
 }
 
 // GetWeekCandles retrieves week candles.
-func (c *Client) GetWeekCandles(req *public.GetWeekCandlesRequest) ([]public.WeekCandle, error) {
+func (c *Client) GetWeekCandles(req *public.GetWeekCandlesRequest) ([]public.WeekCandle, *bithumbgo.Error) {
 	return c.GetWeekCandlesWithContext(context.Background(), req)
 }
 
 // GetWeekCandlesWithContext retrieves week candles with context.
-func (c *Client) GetWeekCandlesWithContext(ctx context.Context, req *public.GetWeekCandlesRequest) ([]public.WeekCandle, error) {
+func (c *Client) GetWeekCandlesWithContext(ctx context.Context, req *public.GetWeekCandlesRequest) ([]public.WeekCandle, *bithumbgo.Error) {
 	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "invalid request", Err: err}
 	}
 
 	params := map[string]string{"market": req.Market}
@@ -211,37 +245,36 @@ func (c *Client) GetWeekCandlesWithContext(ctx context.Context, req *public.GetW
 
 	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/candles/weeks", params), nil)
 	if err != nil {
-		return nil, err
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error: status %d: %s", resp.StatusCode, string(body))
+		return nil, handleHTTPError(resp)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
 	}
 
 	var candles []public.WeekCandle
 	if err := json.Unmarshal(body, &candles); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
 	}
 
 	return candles, nil
 }
 
 // GetMonthCandles retrieves month candles.
-func (c *Client) GetMonthCandles(req *public.GetMonthCandlesRequest) ([]public.MonthCandle, error) {
+func (c *Client) GetMonthCandles(req *public.GetMonthCandlesRequest) ([]public.MonthCandle, *bithumbgo.Error) {
 	return c.GetMonthCandlesWithContext(context.Background(), req)
 }
 
 // GetMonthCandlesWithContext retrieves month candles with context.
-func (c *Client) GetMonthCandlesWithContext(ctx context.Context, req *public.GetMonthCandlesRequest) ([]public.MonthCandle, error) {
+func (c *Client) GetMonthCandlesWithContext(ctx context.Context, req *public.GetMonthCandlesRequest) ([]public.MonthCandle, *bithumbgo.Error) {
 	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "invalid request", Err: err}
 	}
 
 	params := map[string]string{"market": req.Market}
@@ -257,35 +290,34 @@ func (c *Client) GetMonthCandlesWithContext(ctx context.Context, req *public.Get
 
 	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/candles/months", params), nil)
 	if err != nil {
-		return nil, err
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error: status %d: %s", resp.StatusCode, string(body))
+		return nil, handleHTTPError(resp)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
 	}
 
 	var candles []public.MonthCandle
 	if err := json.Unmarshal(body, &candles); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
 	}
 
 	return candles, nil
 }
 
 // GetMarketAll retrieves all available market codes.
-func (c *Client) GetMarketAll(details bool) ([]public.Market, error) {
+func (c *Client) GetMarketAll(details bool) ([]public.Market, *bithumbgo.Error) {
 	return c.GetMarketAllWithContext(context.Background(), details)
 }
 
 // GetMarketAllWithContext retrieves all available market codes with context.
-func (c *Client) GetMarketAllWithContext(ctx context.Context, details bool) ([]public.Market, error) {
+func (c *Client) GetMarketAllWithContext(ctx context.Context, details bool) ([]public.Market, *bithumbgo.Error) {
 	params := map[string]string{}
 	if details {
 		params["isDetails"] = "true"
@@ -293,37 +325,36 @@ func (c *Client) GetMarketAllWithContext(ctx context.Context, details bool) ([]p
 
 	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/market/all", params), nil)
 	if err != nil {
-		return nil, err
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error: status %d: %s", resp.StatusCode, string(body))
+		return nil, handleHTTPError(resp)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
 	}
 
 	var markets []public.Market
 	if err := json.Unmarshal(body, &markets); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
 	}
 
 	return markets, nil
 }
 
 // GetDayCandles retrieves day candles.
-func (c *Client) GetDayCandles(req *public.GetDayCandlesRequest) ([]public.DayCandle, error) {
+func (c *Client) GetDayCandles(req *public.GetDayCandlesRequest) ([]public.DayCandle, *bithumbgo.Error) {
 	return c.GetDayCandlesWithContext(context.Background(), req)
 }
 
 // GetDayCandlesWithContext retrieves day candles with context.
-func (c *Client) GetDayCandlesWithContext(ctx context.Context, req *public.GetDayCandlesRequest) ([]public.DayCandle, error) {
+func (c *Client) GetDayCandlesWithContext(ctx context.Context, req *public.GetDayCandlesRequest) ([]public.DayCandle, *bithumbgo.Error) {
 	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeAPI, Message: "invalid request", Err: err}
 	}
 
 	params := map[string]string{"market": req.Market}
@@ -339,23 +370,22 @@ func (c *Client) GetDayCandlesWithContext(ctx context.Context, req *public.GetDa
 
 	resp, err := c.do(ctx, http.MethodGet, c.buildURL("/v1/candles/days", params), nil)
 	if err != nil {
-		return nil, err
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeNetwork, Message: "HTTP request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error: status %d: %s", resp.StatusCode, string(body))
+		return nil, handleHTTPError(resp)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "read response failed", Err: err}
 	}
 
 	var candles []public.DayCandle
 	if err := json.Unmarshal(body, &candles); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
+		return nil, &bithumbgo.Error{Type: bithumbgo.ErrorTypeParse, Message: "parse response failed", Err: err}
 	}
 
 	return candles, nil

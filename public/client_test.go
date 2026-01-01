@@ -42,7 +42,9 @@ func TestGetMarketAll(t *testing.T) {
 	c := public.NewClient(baseClient)
 
 	markets, err := c.GetMarketAll(true)
-	assertNil(t, err)
+	if err != nil {
+		t.Fatalf("Expected nil error, got %v", err)
+	}
 	assertEqual(t, 1, len(markets))
 	assertEqual(t, "KRW-BTC", markets[0].Market)
 	assertEqual(t, "비트코인", markets[0].KoreanName)
@@ -69,7 +71,9 @@ func TestGetDayCandles(t *testing.T) {
 		Count:  10,
 	}
 	candles, err := c.GetDayCandles(req)
-	assertNil(t, err)
+	if err != nil {
+		t.Fatalf("Expected nil error, got %v", err)
+	}
 	assertEqual(t, 1, len(candles))
 	assertEqual(t, 50500000.0, candles[0].TradePrice)
 }
@@ -92,7 +96,9 @@ func TestGetWeekCandles(t *testing.T) {
 		Count:  10,
 	}
 	candles, err := c.GetWeekCandles(req)
-	assertNil(t, err)
+	if err != nil {
+		t.Fatalf("Expected nil error, got %v", err)
+	}
 	assertEqual(t, 1, len(candles))
 	assertEqual(t, 50500000.0, candles[0].TradePrice)
 }
@@ -115,7 +121,9 @@ func TestGetMonthCandles(t *testing.T) {
 		Count:  10,
 	}
 	candles, err := c.GetMonthCandles(req)
-	assertNil(t, err)
+	if err != nil {
+		t.Fatalf("Expected nil error, got %v", err)
+	}
 	assertEqual(t, 1, len(candles))
 	assertEqual(t, 50500000.0, candles[0].TradePrice)
 }
