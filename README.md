@@ -1,9 +1,8 @@
-# Bithumb Go SDK
+# Bithumb Go API Client (Unofficial)
 
 [![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-빗썸(Bithumb) 거래소 API를 위한 공식 Go SDK입니다. REST API와 WebSocket을 지원하며, 타입 안전성과 동시성 안전성을 보장합니다.
+빗썸(Bithumb) Open API를 위한 비공식 Go 클라이언트 라이브러리입니다. 개인이 개발하고 유지하며, 빗썸이 공식적으로 제공하거나 보증하는 SDK가 아닙니다. REST API와 WebSocket을 지원하며, 타입 안전성과 동시성 안전성을 지향합니다.
 
 ## 특징
 
@@ -358,21 +357,17 @@ ws.SetReconnectTimeout(15 * time.Second)
 
 - Go 1.23 이상
 
-## 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. [LICENSE](LICENSE) 파일을 참조하세요.
-
 ## 지원
 
 - 버전 노트: [CHANGELOG.md](CHANGELOG.md)
 - 기여 가이드: [CONTRIBUTING.md](CONTRIBUTING.md)
 - 문제 신고: [GitHub Issues](https://github.com/hysuki/bithumb-go/issues)
 
-## 공식 링크
+## 빗썸 공식 링크
 
 - [빗썸 API 문서](https://apidocs.bithumb.com)
 - [빗썸 거래소](https://www.bithumb.com)
 
 ---
 
-**주의**: 이 SDK는 공식적으로 빗썸에서 지원되지 않습니다. 사용 시 자신의 책임하에 사용하세요.
+**주의**: 이 프로젝트는 개인이 유지하는 비공식 클라이언트이며, 빗썸이 제공하거나 보증하지 않습니다. 사용 시 자신의 책임하에 사용하세요.
