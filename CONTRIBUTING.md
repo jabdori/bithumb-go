@@ -204,8 +204,11 @@ func TestClient_GetTicker(t *testing.T) {
 ### 테스트 실행
 
 ```bash
-# 모든 테스트 실행
+# 외부 API에 의존하지 않는 기본 테스트 실행
 go test ./...
+
+# 실제 빗썸 API를 호출하는 통합 테스트 실행
+go test -tags=integration ./public
 
 # 상세 모드
 go test -v ./...
@@ -217,7 +220,8 @@ go tool cover -html=coverage.out
 
 # 특정 패키지 테스트
 go test ./client
-go test ./public -run TestGetTicker
+go test ./public -run TestGetMarketAll
+go test -tags=integration ./public -run TestGetTicker
 
 # 벤치마크
 go test -bench=. -benchmem
